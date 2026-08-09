@@ -1,72 +1,62 @@
 {
  "schema": 3,
- "created": "2026-08-08 23:01:34 UTC",
- "updated": "2026-08-09 01:20:27 UTC",
+ "created": "2026-08-09 02:06:09 UTC",
+ "updated": "2026-08-09 02:11:31 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
-   "ts": "2026-08-09 00:15:12 UTC",
+   "ts": "2026-08-09 02:07:17 UTC",
    "note": "state/git/autosave 생성"
   },
   "cell08R_restore": {
    "status": "done",
-   "ts": "2026-08-09 00:15:13 UTC",
+   "ts": "2026-08-09 02:07:18 UTC",
    "note": ""
   },
   "cell02_forge_install": {
    "status": "done",
-   "ts": "2026-08-09 00:17:02 UTC",
+   "ts": "2026-08-09 02:08:32 UTC",
    "note": "--attention-pytorch"
   },
   "cell03_models": {
    "status": "done",
-   "ts": "2026-08-09 00:17:45 UTC",
+   "ts": "2026-08-09 02:09:05 UTC",
    "note": ""
   },
   "cell04_forge_api": {
    "status": "done",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:46 UTC",
    "note": ""
   },
   "cell05_dirs": {
    "status": "done",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:46 UTC",
    "note": ""
   },
   "cell06_common": {
    "status": "done",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:46 UTC",
    "note": ""
   },
   "cell07_engine": {
    "status": "done",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:46 UTC",
    "note": ""
   },
   "cell08_upload": {
    "status": "done",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:46 UTC",
    "note": ""
   },
   "cellB_modules": {
    "status": "done",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:47 UTC",
    "note": ""
   },
   "cell09_verify": {
    "status": "partial",
-   "ts": "2026-08-09 00:18:15 UTC",
+   "ts": "2026-08-09 02:09:47 UTC",
    "note": "miss=796 bad=0 extra=1"
-  },
-  "autosave_last": {
-   "status": "done",
-   "ts": "2026-08-09 01:15:17 UTC",
-   "note": "e5b7533e6db91c64513053fa1c974684b1a17d3c"
-  },
-  "lora_src_HRM": {
-   "status": "done",
-   "ts": "2026-08-09 01:20:27 UTC",
-   "note": "48"
   }
  },
  "counts": {
@@ -86,139 +76,21 @@
   ],
   "lora": []
  },
- "commits": [
-  {
-   "hash": "374f3b3a6c20a70488148c29526702dc8663b59b",
-   "ts": "2026-08-09 00:05:03 UTC",
-   "msg": "orchestrator exit",
-   "pushed": true
-  },
-  {
-   "hash": "be0436987cfeb9c95e2999e3260863860c81d17d",
-   "ts": "2026-08-09 00:09:07 UTC",
-   "msg": "orchestrator exit",
-   "pushed": true
-  },
-  {
-   "hash": "c0963a70f8269a579a029e75907fcd91a398c628",
-   "ts": "2026-08-09 00:21:07 UTC",
-   "msg": "orchestrator exit",
-   "pushed": true
-  },
-  {
-   "hash": "b96462c61fac0251dd146d23cdc66e9eff79d6b7",
-   "ts": "2026-08-09 00:29:05 UTC",
-   "msg": "orchestrator exit",
-   "pushed": true
-  },
-  {
-   "hash": "a16e4406f264c891db63c03aeddb8d5e316f4dd6",
-   "ts": "2026-08-09 00:35:13 UTC",
-   "msg": "autosave",
-   "pushed": true
-  },
-  {
-   "hash": "9d273f4bc32162ff8e7629abd727ccb012342e27",
-   "ts": "2026-08-09 00:55:15 UTC",
-   "msg": "autosave",
-   "pushed": true
-  },
-  {
-   "hash": "e5b7533e6db91c64513053fa1c974684b1a17d3c",
-   "ts": "2026-08-09 01:15:17 UTC",
-   "msg": "autosave",
-   "pushed": true
-  }
- ],
- "last_commit": "e5b7533e6db91c64513053fa1c974684b1a17d3c",
+ "commits": [],
+ "last_commit": null,
  "log": [
-  "2026-08-08 23:01:34 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:01:35 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:12:05 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:12:07 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:13:55 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-08 23:14:40 UTC | cell03_models | done | ",
-  "2026-08-08 23:15:00 UTC | cell04_forge_api | failed | ",
-  "2026-08-08 23:19:27 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:19:28 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:21:16 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-08 23:21:59 UTC | cell03_models | done | ",
-  "2026-08-08 23:22:19 UTC | cell04_forge_api | failed | ",
-  "2026-08-08 23:23:34 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:23:35 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:23:35 UTC | cell03_models | done | ",
-  "2026-08-08 23:23:45 UTC | cell04_forge_api | failed | ",
-  "2026-08-08 23:27:57 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:28:00 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:29:47 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-08 23:30:23 UTC | cell03_models | done | ",
-  "2026-08-08 23:31:26 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:31:27 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:31:27 UTC | cell03_models | done | ",
-  "2026-08-08 23:31:57 UTC | cell04_forge_api | done | ",
-  "2026-08-08 23:31:57 UTC | cell05_dirs | done | ",
-  "2026-08-08 23:31:57 UTC | cell06_common | done | ",
-  "2026-08-08 23:31:57 UTC | cell07_engine | done | ",
-  "2026-08-08 23:31:57 UTC | cell08_upload | done | ",
-  "2026-08-08 23:39:46 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:39:48 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:41:29 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-08 23:42:03 UTC | cell03_models | done | ",
-  "2026-08-08 23:42:40 UTC | cell04_forge_api | done | ",
-  "2026-08-08 23:42:40 UTC | cell05_dirs | done | ",
-  "2026-08-08 23:42:40 UTC | cell06_common | done | ",
-  "2026-08-08 23:42:40 UTC | cell07_engine | done | ",
-  "2026-08-08 23:42:40 UTC | cell08_upload | done | ",
-  "2026-08-08 23:42:40 UTC | cellB_modules | done | ",
-  "2026-08-08 23:42:40 UTC | cell09_verify | partial | miss=796 bad=0 extra=1",
-  "2026-08-08 23:51:50 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:51:53 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:53:43 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-08 23:54:33 UTC | cell03_models | done | ",
-  "2026-08-08 23:55:03 UTC | cell04_forge_api | done | ",
-  "2026-08-08 23:55:03 UTC | cell05_dirs | done | ",
-  "2026-08-08 23:55:03 UTC | cell06_common | done | ",
-  "2026-08-08 23:55:03 UTC | cell07_engine | done | ",
-  "2026-08-08 23:55:03 UTC | cell08_upload | done | ",
-  "2026-08-08 23:55:03 UTC | cellB_modules | done | ",
-  "2026-08-08 23:55:03 UTC | cell09_verify | partial | miss=796 bad=0 extra=1",
-  "2026-08-08 23:57:45 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-08 23:57:46 UTC | cell08R_restore | done | ",
-  "2026-08-08 23:59:29 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-09 00:00:13 UTC | cell03_models | done | ",
-  "2026-08-09 00:00:44 UTC | cell04_forge_api | done | ",
-  "2026-08-09 00:00:44 UTC | cell05_dirs | done | ",
-  "2026-08-09 00:00:44 UTC | cell06_common | done | ",
-  "2026-08-09 00:00:44 UTC | cell07_engine | done | ",
-  "2026-08-09 00:00:44 UTC | cell08_upload | done | ",
-  "2026-08-09 00:00:44 UTC | cellB_modules | done | ",
-  "2026-08-09 00:00:44 UTC | cell09_verify | partial | miss=796 bad=0 extra=1",
-  "2026-08-09 00:06:57 UTC | cell04_forge_api | done | ",
-  "2026-08-09 00:10:21 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-09 00:10:22 UTC | cell08R_restore | done | ",
-  "2026-08-09 00:12:06 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-09 00:12:45 UTC | cell03_models | done | ",
-  "2026-08-09 00:13:16 UTC | cell04_forge_api | done | ",
-  "2026-08-09 00:13:16 UTC | cell05_dirs | done | ",
-  "2026-08-09 00:13:16 UTC | cell06_common | done | ",
-  "2026-08-09 00:13:16 UTC | cell07_engine | done | ",
-  "2026-08-09 00:13:16 UTC | cell08_upload | done | ",
-  "2026-08-09 00:13:16 UTC | cellB_modules | done | ",
-  "2026-08-09 00:13:16 UTC | cell09_verify | partial | miss=796 bad=0 extra=1",
-  "2026-08-09 00:15:12 UTC | cell08S_modules | done | state/git/autosave 생성",
-  "2026-08-09 00:15:13 UTC | cell08R_restore | done | ",
-  "2026-08-09 00:17:02 UTC | cell02_forge_install | done | --attention-pytorch",
-  "2026-08-09 00:17:45 UTC | cell03_models | done | ",
-  "2026-08-09 00:18:15 UTC | cell04_forge_api | done | ",
-  "2026-08-09 00:18:15 UTC | cell05_dirs | done | ",
-  "2026-08-09 00:18:15 UTC | cell06_common | done | ",
-  "2026-08-09 00:18:15 UTC | cell07_engine | done | ",
-  "2026-08-09 00:18:15 UTC | cell08_upload | done | ",
-  "2026-08-09 00:18:15 UTC | cellB_modules | done | ",
-  "2026-08-09 00:18:15 UTC | cell09_verify | partial | miss=796 bad=0 extra=1",
-  "2026-08-09 00:35:13 UTC | autosave_last | done | a16e4406f264c891db63c03aeddb8d5e316f4dd6",
-  "2026-08-09 00:55:15 UTC | autosave_last | done | 9d273f4bc32162ff8e7629abd727ccb012342e27",
-  "2026-08-09 01:15:17 UTC | autosave_last | done | e5b7533e6db91c64513053fa1c974684b1a17d3c",
-  "2026-08-09 01:20:27 UTC | lora_src_HRM | done | 48"
+  "2026-08-09 02:06:09 UTC | cell08S_modules | done | state/git/autosave 생성",
+  "2026-08-09 02:06:11 UTC | cell08R_restore | done | ",
+  "2026-08-09 02:07:17 UTC | cell08S_modules | done | state/git/autosave 생성",
+  "2026-08-09 02:07:18 UTC | cell08R_restore | done | ",
+  "2026-08-09 02:08:32 UTC | cell02_forge_install | done | --attention-pytorch",
+  "2026-08-09 02:09:05 UTC | cell03_models | done | ",
+  "2026-08-09 02:09:46 UTC | cell04_forge_api | done | ",
+  "2026-08-09 02:09:46 UTC | cell05_dirs | done | ",
+  "2026-08-09 02:09:46 UTC | cell06_common | done | ",
+  "2026-08-09 02:09:46 UTC | cell07_engine | done | ",
+  "2026-08-09 02:09:46 UTC | cell08_upload | done | ",
+  "2026-08-09 02:09:47 UTC | cellB_modules | done | ",
+  "2026-08-09 02:09:47 UTC | cell09_verify | partial | miss=796 bad=0 extra=1"
  ]
 }
