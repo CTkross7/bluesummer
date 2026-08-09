@@ -2,16 +2,14 @@
  "counts": {
   "char": 0,
   "bg": 0,
-  "ui": 1,
+  "ui": 0,
   "lora": 0,
   "char_want": 720,
   "bg_want": 68,
   "ui_want": 8
  },
- "updated": "2026-08-09 02:11:35 UTC",
+ "updated": "2026-08-09 11:50:42 UTC",
  "char": [],
  "bg": [],
- "ui": [
-  "_test"
- ]
+ "ui": []
 }
