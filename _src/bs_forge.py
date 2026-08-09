@@ -2,17 +2,44 @@
 # -*- coding: utf-8 -*-
 
 """
-Forge 설치 / 호환성 복구(doctor) / 기동 / 종료 통합 모듈 (v4).
+BLUE SUMMER — Forge 통합 관리 모듈 v5.1
 
-주요 호환성 처리
-- mediapipe < 1.0
-- numpy 1.26.4 고정
-- Forge requirements_versions.txt의 numpy 1.26.2 pin을 1.26.4로 보정
-- scikit-image 호환성 확인
-- torch/xformers 불일치 감지
-- OpenCV import 확인
-- dependency 설치 실패 시 READY marker 생성 금지
-- Forge API 기동 및 모델/업스케일러 검증
+Kaggle Python 3.12 / T4 환경 대응.
+
+주요 처리:
+
+1. Forge를 /kaggle/temp/forge 에 설치
+2. 모델 저장소는 /kaggle/temp/models 사용
+3. NumPy 1.26.4 고정
+4. protobuf 3.20.0 고정
+5. setuptools 69.5.1 고정
+6. scikit-image 호환성 검사
+7. OpenCV 검사
+8. xformers 불일치 검사
+9. wandb / protobuf telemetry 충돌 복구
+10. pytorch_lightning 검사
+11. OpenAI CLIP의 오래된 setup.py 문제 우회
+12. Forge requirements_versions.txt 의 NumPy pin 수정
+13. launch.py --exit 의존성 설치
+14. READY marker는 모든 검증 성공 후에만 생성
+15. Forge API 기동
+16. 모델 / 업스케일러 검증
+17. 종료 및 VRAM 확인
+
+중요:
+
+OpenAI CLIP의 오래된 GitHub archive 패키지는
+최근 setuptools / pip build isolation 환경에서
+pkg_resources 문제를 일으킬 수 있다.
+
+따라서 CLIP URL을 직접 선설치하지 않는다.
+
+Forge가 요구하는 open-clip-torch는 requirements를 통해
+정상적으로 설치하도록 둔다.
+
+또한 Forge의 launch.py가 오래된 OpenAI CLIP URL을
+강제로 설치하려는 경우를 대비해 launch_utils.py의
+clip_package 설정을 안전하게 패치한다.
 """
 
 import os
@@ -23,7 +50,14 @@ import subprocess
 import requests
 
 
-sys.path.insert(0, "/kaggle/working/BLUESUMMER")
+# =====================================================================
+# BLUE SUMMER 모듈 경로
+# =====================================================================
+
+sys.path.insert(
+    0,
+    "/kaggle/working/BLUESUMMER"
+)
 
 import bs_log as L
 
@@ -33,15 +67,23 @@ import bs_log as L
 # =====================================================================
 
 FORGE = "/kaggle/temp/forge"
+
 STORE = "/kaggle/temp/models"
 
 LOGFILE = "/kaggle/temp/forge.log"
+
 MARKER = "/kaggle/temp/.forge_env_ready"
 
 PORT = 7860
+
 API = "http://127.0.0.1:%d" % PORT
 
 CONSTRAINT = "/kaggle/temp/pip-constraints.txt"
+
+
+# =====================================================================
+# 외부 Extension
+# =====================================================================
 
 EXT_REPOS = [
     (
@@ -93,8 +135,6 @@ def args_str():
 def _env():
     """
     Forge / pip 실행 환경.
-
-    PIP_CONSTRAINT를 통해 NumPy 1.26.4를 강제한다.
     """
 
     e = os.environ.copy()
@@ -108,14 +148,19 @@ def _env():
 
 
 def _killpg(proc):
-    """프로세스 그룹 전체 종료."""
+    """
+    프로세스 그룹 전체 종료.
+    """
 
     try:
+
         os.killpg(
             os.getpgid(proc.pid),
             signal.SIGTERM
         )
+
     except Exception:
+
         try:
             proc.terminate()
         except Exception:
@@ -124,9 +169,7 @@ def _killpg(proc):
 
 def _write_constraint():
     """
-    BLUE SUMMER용 pip constraint 생성.
-
-    NumPy 1.26.4를 유지하고 protobuf는 5 미만으로 제한한다.
+    BLUE SUMMER 전용 pip constraint.
     """
 
     os.makedirs(
@@ -139,26 +182,32 @@ def _write_constraint():
         "w",
         encoding="utf-8"
     ) as f:
-        f.write("numpy==1.26.4\n")
-        f.write("protobuf<5\n")
 
-    L.log(
-        "pip constraint : numpy==1.26.4 / protobuf<5",
-        "OK"
+        f.write("numpy==1.26.4\n")
+        f.write("protobuf==3.20.0\n")
+        f.write("setuptools==69.5.1\n")
+
+    L.ok(
+        "pip constraint : "
+        "numpy==1.26.4 / protobuf==3.20.0 / setuptools==69.5.1"
     )
 
 
+# =====================================================================
+# Forge requirements 패치
+# =====================================================================
+
 def _patch_forge_requirements():
     """
-    Forge requirements_versions.txt의 오래된 NumPy pin을 수정한다.
+    Forge requirements_versions.txt 호환성 수정.
 
-    기존:
+    기본 Forge에는 현재 다음과 같은 pin이 존재한다.
+
+        setuptools==69.5.1
         numpy==1.26.2
+        protobuf==3.20.0
 
-    변경:
-        numpy==1.26.4
-
-    원본에 NumPy 1.26.2가 없으면 아무것도 하지 않는다.
+    NumPy만 1.26.4로 맞춘다.
     """
 
     req = os.path.join(
@@ -167,77 +216,250 @@ def _patch_forge_requirements():
     )
 
     if not os.path.isfile(req):
+
         L.warn(
-            "Forge requirements_versions.txt 없음: %s" % req
+            "Forge requirements_versions.txt 없음"
         )
+
         return False
 
     try:
+
         with open(
             req,
             "r",
             encoding="utf-8"
         ) as f:
+
             text = f.read()
 
         old = "numpy==1.26.2"
         new = "numpy==1.26.4"
 
         if old in text:
-            text = text.replace(old, new)
+
+            text = text.replace(
+                old,
+                new
+            )
 
             with open(
                 req,
                 "w",
                 encoding="utf-8"
             ) as f:
+
                 f.write(text)
 
-            L.log(
-                "Forge requirements: numpy 1.26.2 -> 1.26.4",
-                "OK"
+            L.ok(
+                "Forge requirements: "
+                "numpy 1.26.2 -> 1.26.4"
             )
 
         else:
+
             L.log(
-                "Forge requirements에 numpy==1.26.2 없음",
-                "INFO"
+                "Forge requirements 패치 : 변경 없음"
             )
 
-        # 실제 NumPy 요구사항 출력
         numpy_lines = []
+        setuptools_lines = []
 
         for line in text.splitlines():
+
             stripped = line.strip()
 
             if stripped.lower().startswith("numpy"):
-                numpy_lines.append(stripped)
+
+                numpy_lines.append(
+                    stripped
+                )
+
+            if stripped.lower().startswith("setuptools"):
+
+                setuptools_lines.append(
+                    stripped
+                )
 
         if numpy_lines:
+
             L.log(
                 "Forge NumPy 요구사항 : %s"
-                % ", ".join(numpy_lines),
-                "INFO"
+                % ", ".join(numpy_lines)
+            )
+
+        if setuptools_lines:
+
+            L.log(
+                "Forge setuptools 요구사항 : %s"
+                % ", ".join(setuptools_lines)
             )
 
         return True
 
     except Exception as e:
+
         L.err(
-            "Forge requirements 패치 실패: %s" % e
+            "Forge requirements 패치 실패: %s"
+            % e
         )
+
         return False
 
 
 # =====================================================================
-# Forge 설치
+# Forge launch_utils CLIP 패치
+# =====================================================================
+
+def _patch_clip_launcher():
+    """
+    Forge launch_utils.py가 오래된 OpenAI CLIP archive를
+    직접 설치하려는 경우를 우회한다.
+
+    문제의 패키지:
+
+    https://github.com/openai/CLIP/archive/
+    d50d76daa670286dd6cacf3bcd80b5e4823fc8e1.zip
+
+    이 패키지는 오래된 setup.py를 사용하고,
+    최근 pip build isolation에서 pkg_resources 문제가
+    발생할 수 있다.
+
+    Forge 자체는 open-clip-torch를 requirements에 사용하므로
+    이 오래된 OpenAI CLIP 설치 단계를 건너뛰도록 한다.
+
+    반환:
+        True  = 패치 완료 또는 패치 불필요
+        False = 패치 실패
+    """
+
+    path = os.path.join(
+        FORGE,
+        "modules",
+        "launch_utils.py"
+    )
+
+    if not os.path.isfile(path):
+
+        L.warn(
+            "launch_utils.py 없음 - CLIP launcher 패치 생략"
+        )
+
+        return True
+
+    try:
+
+        with open(
+            path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            text = f.read()
+
+        # -------------------------------------------------------------
+        # 이미 패치됨
+        # -------------------------------------------------------------
+
+        if "BLUE_SUMMER_CLIP_PATCH" in text:
+
+            L.log(
+                "Forge CLIP launcher : 이미 패치됨"
+            )
+
+            return True
+
+        # -------------------------------------------------------------
+        # clip_package 변수 찾기
+        # -------------------------------------------------------------
+
+        if "clip_package =" not in text:
+
+            L.log(
+                "Forge에 clip_package 직접 정의 없음 "
+                "- 패치 불필요"
+            )
+
+            return True
+
+        # -------------------------------------------------------------
+        # 실제 clip_package 선언을 찾아 변경
+        # -------------------------------------------------------------
+
+        lines = text.splitlines()
+
+        changed = False
+
+        for i, line in enumerate(lines):
+
+            stripped = line.strip()
+
+            if (
+                stripped.startswith("clip_package")
+                and "=" in stripped
+            ):
+
+                # 기존 값 보존 여부와 관계없이
+                # Forge에서 오래된 OpenAI CLIP archive를
+                # 직접 설치하지 않도록 한다.
+
+                indent = line[
+                    :len(line) - len(line.lstrip())
+                ]
+
+                lines[i] = (
+                    indent
+                    + "# BLUE_SUMMER_CLIP_PATCH\n"
+                    + indent
+                    + "clip_package = \"open-clip-torch==2.20.0\""
+                )
+
+                changed = True
+
+                break
+
+        if not changed:
+
+            L.log(
+                "clip_package 자동 패치 대상 없음"
+            )
+
+            return True
+
+        new_text = "\n".join(lines)
+
+        with open(
+            path,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(new_text)
+
+        L.ok(
+            "Forge CLIP launcher 패치 완료 "
+            "-> open-clip-torch 사용"
+        )
+
+        return True
+
+    except Exception as e:
+
+        L.err(
+            "CLIP launcher 패치 실패: %s"
+            % e
+        )
+
+        return False
+
+
+# =====================================================================
+# Forge clone
 # =====================================================================
 
 def clone():
     """
     Forge 및 ADetailer clone.
-
-    모든 임시 파일은 /kaggle/temp에 둔다.
     """
 
     os.makedirs(
@@ -245,31 +467,45 @@ def clone():
         exist_ok=True
     )
 
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
     # Forge
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
 
     if not os.path.isdir(
-        os.path.join(FORGE, ".git")
+        os.path.join(
+            FORGE,
+            ".git"
+        )
     ):
-        L.log("Forge clone ...")
+
+        L.log(
+            "Forge clone ..."
+        )
 
         rc, out = L.shell(
             "git clone --depth 1 "
-            "https://github.com/lllyasviel/stable-diffusion-webui-forge "
+            "https://github.com/lllyasviel/"
+            "stable-diffusion-webui-forge "
             "%s" % FORGE
         )
 
         if rc != 0:
-            L.err("Forge clone 실패")
+
+            L.err(
+                "Forge clone 실패"
+            )
+
             return False
 
     else:
-        L.log("Forge 이미 존재")
 
-    # -------------------------------------------------------------
+        L.log(
+            "Forge 이미 존재"
+        )
+
+    # -----------------------------------------------------------------
     # Extensions
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
 
     ext = os.path.join(
         FORGE,
@@ -297,18 +533,21 @@ def clone():
             )
 
             if rc != 0:
+
                 L.warn(
-                    "확장 clone 실패 : %s" % name
+                    "확장 clone 실패 : %s"
+                    % name
                 )
 
         else:
+
             L.log(
                 "확장 존재 : " + name
             )
 
-    # -------------------------------------------------------------
-    # Forge 내부 모델 디렉터리
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # 모델 디렉터리
+    # -----------------------------------------------------------------
 
     for d in [
         "models/Stable-diffusion",
@@ -320,67 +559,115 @@ def clone():
     ]:
 
         os.makedirs(
-            os.path.join(FORGE, d),
+            os.path.join(
+                FORGE,
+                d
+            ),
             exist_ok=True
         )
 
     return True
 
 
+# =====================================================================
+# 사전 pin
+# =====================================================================
+
 def pre_pin():
     """
-    Forge requirements 설치 전에 호환 버전을 선점한다.
+    Forge requirements 설치 전에 핵심 패키지를 고정한다.
 
-    핵심:
-    - NumPy 1.26.4 유지
-    - mediapipe < 1.0
-    - protobuf < 5
-    - ADetailer 런타임 의존성
-    - Forge requirements의 NumPy pin 보정
+    OpenAI CLIP URL은 여기서 설치하지 않는다.
     """
 
     L.log(
         "호환 버전 선점 설치 "
-        "(numpy 1.26.4 / mediapipe<1.0 등)"
+        "(setuptools / numpy / mediapipe / protobuf / CLIP)"
     )
 
-    # -------------------------------------------------------------
-    # pip constraint 생성
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # constraint
+    # -----------------------------------------------------------------
 
     _write_constraint()
 
-    # -------------------------------------------------------------
-    # NumPy + MediaPipe
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # Forge requirements
+    # -----------------------------------------------------------------
 
-    L.shell(
+    _patch_forge_requirements()
+
+    # -----------------------------------------------------------------
+    # CLIP launcher
+    # -----------------------------------------------------------------
+
+    _patch_clip_launcher()
+
+    # -----------------------------------------------------------------
+    # setuptools
+    # -----------------------------------------------------------------
+
+    L.log(
+        "CLIP 호환용 setuptools 69.5.1 준비"
+    )
+
+    rc, out = L.shell(
+        'pip install -q '
+        '--force-reinstall '
+        '"setuptools==69.5.1"',
+        quiet=True,
+        title="setuptools 69.5.1"
+    )
+
+    if rc != 0:
+
+        L.err(
+            "setuptools 69.5.1 설치 실패"
+        )
+
+        return False
+
+    # -----------------------------------------------------------------
+    # 핵심 호환 패키지
+    # -----------------------------------------------------------------
+
+    rc, out = L.shell(
         'pip install -q '
         '"numpy==1.26.4" '
         '"mediapipe<1.0" '
-        '"protobuf<5"',
+        '"protobuf==3.20.0"',
         quiet=True,
-        title="numpy 1.26.4 + mediapipe<1.0"
+        title="numpy / mediapipe / protobuf"
     )
 
-    # -------------------------------------------------------------
-    # ADetailer 런타임 의존성
-    # -------------------------------------------------------------
+    if rc != 0:
 
-    L.shell(
+        L.err(
+            "핵심 호환 패키지 설치 실패"
+        )
+
+        return False
+
+    # -----------------------------------------------------------------
+    # ADetailer
+    # -----------------------------------------------------------------
+
+    rc, out = L.shell(
         'pip install -q '
         '"ultralytics>=8.2,<9" '
         '"py-cpuinfo" '
-        '"protobuf<5"',
+        '"protobuf==3.20.0"',
         quiet=True,
         title="ADetailer 런타임 의존성"
     )
 
-    # -------------------------------------------------------------
-    # Forge requirements 수정
-    # -------------------------------------------------------------
+    if rc != 0:
 
-    _patch_forge_requirements()
+        L.warn(
+            "ADetailer 런타임 의존성 일부 설치 실패"
+        )
+
+    return True
 
 
 # =====================================================================
@@ -389,24 +676,19 @@ def pre_pin():
 
 def doctor(verbose=True):
     """
-    주요 Python/AI 의존성을 검사하고 필요한 경우 복구한다.
-
-    검사:
-    - numpy
-    - scikit-image
-    - xformers
-    - OpenCV
+    주요 의존성 검사 및 복구.
     """
 
     fixed = []
 
-    # =============================================================
+    # =================================================================
     # NumPy
-    # =============================================================
+    # =================================================================
 
     rc, out = L.shell(
         'python -c '
-        '"import numpy;print(\'NPV\'+numpy.__version__)"',
+        '"import numpy;'
+        'print(\'NPV=\'+numpy.__version__)"',
         quiet=True
     )
 
@@ -414,26 +696,13 @@ def doctor(verbose=True):
 
     for line in out.splitlines():
 
-        if line.startswith("NPV"):
-            ver = line[3:].strip()
+        if line.startswith("NPV="):
+
+            ver = line[4:].strip()
+
             break
 
-    if ver.startswith("2."):
-
-        L.warn(
-            "numpy %s 감지 -> 1.26.4 로 복구"
-            % ver
-        )
-
-        L.shell(
-            'pip install -q --force-reinstall '
-            '"numpy==1.26.4"',
-            title="numpy 복구"
-        )
-
-        fixed.append("numpy")
-
-    elif ver != "1.26.4":
+    if ver != "1.26.4":
 
         L.warn(
             "numpy %s 감지 -> 1.26.4로 고정"
@@ -442,8 +711,9 @@ def doctor(verbose=True):
 
         L.shell(
             'pip install -q '
+            '--force-reinstall '
             '"numpy==1.26.4"',
-            title="numpy 1.26.4 고정"
+            title="numpy 복구"
         )
 
         fixed.append("numpy")
@@ -451,52 +721,245 @@ def doctor(verbose=True):
     elif verbose:
 
         L.log(
-            "numpy %s : 정상" % ver
+            "numpy 1.26.4 : 정상"
         )
 
-    # =============================================================
+    # =================================================================
     # scikit-image
-    # =============================================================
+    # =================================================================
 
     rc, out = L.shell(
         'python -c '
-        '"from skimage import exposure;print(\'SKOK\')"',
+        '"from skimage import exposure;'
+        'print(\'SKOK\')"',
         quiet=True
     )
 
     if "SKOK" not in out:
 
         L.warn(
-            "scikit-image 임포트 실패 "
-            "-> 0.24.0 재설치"
+            "scikit-image 임포트 실패 -> "
+            "0.24.0 재설치"
         )
 
         L.shell(
-            'pip install -q "scikit-image==0.24.0"',
+            'pip install -q '
+            '"scikit-image==0.24.0"',
             title="scikit-image 복구"
         )
 
-        rc, out = L.shell(
-            'python -c '
-            '"from skimage import exposure;print(\'SKOK\')"',
-            quiet=True
+        fixed.append(
+            "scikit-image"
         )
 
-        fixed.append("scikit-image")
-
-    if "SKOK" in out and verbose:
+    elif verbose:
 
         L.log(
             "scikit-image : 정상"
         )
 
-    # =============================================================
-    # xformers
-    # =============================================================
+    # =================================================================
+    # protobuf
+    # =================================================================
 
     rc, out = L.shell(
         'python -c '
-        '"import xformers,xformers.ops;print(\'XOK\')"',
+        '"import google.protobuf;'
+        'print(\'PB=\'+google.protobuf.__version__)"',
+        quiet=True
+    )
+
+    pbver = ""
+
+    for line in out.splitlines():
+
+        if line.startswith("PB="):
+
+            pbver = line[3:].strip()
+
+            break
+
+    if pbver != "3.20.0":
+
+        L.warn(
+            "protobuf %s 감지 -> 3.20.0로 고정"
+            % (pbver or "?")
+        )
+
+        L.shell(
+            'pip install -q '
+            '--force-reinstall '
+            '"protobuf==3.20.0"',
+            title="protobuf 복구"
+        )
+
+        fixed.append(
+            "protobuf"
+        )
+
+    elif verbose:
+
+        L.log(
+            "protobuf : 3.20.0"
+        )
+
+    # =================================================================
+    # setuptools / pkg_resources
+    # =================================================================
+
+    rc, out = L.shell(
+        'python -c '
+        '"import setuptools;'
+        'print(\'SETUP=\'+setuptools.__version__);'
+        'import pkg_resources;'
+        'print(\'PKGRES=OK\')"',
+        quiet=True
+    )
+
+    if (
+        "SETUP=69.5.1" not in out
+        or "PKGRES=OK" not in out
+    ):
+
+        L.warn(
+            "setuptools/pkg_resources 불완전 -> "
+            "69.5.1 복구"
+        )
+
+        L.shell(
+            'pip install -q '
+            '--force-reinstall '
+            '"setuptools==69.5.1"',
+            title="setuptools 복구"
+        )
+
+        fixed.append(
+            "setuptools"
+        )
+
+    elif verbose:
+
+        L.log(
+            "setuptools 69.5.1 / pkg_resources : 정상"
+        )
+
+    # =================================================================
+    # wandb
+    # =================================================================
+
+    rc, out = L.shell(
+        'python -c '
+        '"import wandb;'
+        'print(\'WANDB=\'+wandb.__version__)"',
+        quiet=True
+    )
+
+    if rc != 0:
+
+        L.warn(
+            "wandb import 실패 -> 0.17.9 재설치"
+        )
+
+        L.shell(
+            'pip install -q '
+            '--force-reinstall '
+            '"wandb==0.17.9"',
+            title="wandb 복구"
+        )
+
+        fixed.append(
+            "wandb"
+        )
+
+    else:
+
+        wbver = ""
+
+        for line in out.splitlines():
+
+            if line.startswith("WANDB="):
+
+                wbver = line[6:].strip()
+
+                break
+
+        if wbver != "0.17.9":
+
+            L.warn(
+                "wandb %s -> 0.17.9 고정"
+                % (wbver or "?")
+            )
+
+            L.shell(
+                'pip install -q '
+                '--force-reinstall '
+                '"wandb==0.17.9"',
+                title="wandb 고정"
+            )
+
+            fixed.append(
+                "wandb"
+            )
+
+        elif verbose:
+
+            L.log(
+                "wandb : 정상 0.17.9"
+            )
+
+    # =================================================================
+    # pytorch_lightning
+    # =================================================================
+
+    rc, out = L.shell(
+        'python -c '
+        '"import pytorch_lightning as p;'
+        'print(\'PL=\'+p.__version__)"',
+        quiet=True
+    )
+
+    if rc != 0:
+
+        L.warn(
+            "pytorch_lightning import 실패"
+        )
+
+        L.shell(
+            'pip install -q '
+            '"pytorch_lightning==1.9.4"',
+            title="pytorch_lightning 복구"
+        )
+
+        fixed.append(
+            "pytorch_lightning"
+        )
+
+    elif verbose:
+
+        plver = ""
+
+        for line in out.splitlines():
+
+            if line.startswith("PL="):
+
+                plver = line[3:].strip()
+
+                break
+
+        L.log(
+            "pytorch_lightning : 정상 %s"
+            % (plver or "?")
+        )
+
+    # =================================================================
+    # xformers
+    # =================================================================
+
+    rc, out = L.shell(
+        'python -c '
+        '"import xformers,'
+        'xformers.ops;'
+        'print(\'XOK\')"',
         quiet=True
     )
 
@@ -510,8 +973,7 @@ def doctor(verbose=True):
         if "Name: xformers" in o2:
 
             L.warn(
-                "torch 버전과 맞지 않는 xformers 발견 "
-                "-> 제거 (SDPA 사용)"
+                "xformers import 실패 -> 제거"
             )
 
             L.shell(
@@ -519,21 +981,30 @@ def doctor(verbose=True):
                 title="xformers 제거"
             )
 
-            fixed.append("xformers")
+            fixed.append(
+                "xformers"
+            )
+
+        elif verbose:
+
+            L.log(
+                "xformers : 미설치 (SDPA 사용)"
+            )
 
     elif verbose:
 
         L.log(
-            "xformers : 정상(사용하지 않지만 무해)"
+            "xformers : 정상"
         )
 
-    # =============================================================
+    # =================================================================
     # OpenCV
-    # =============================================================
+    # =================================================================
 
     rc, out = L.shell(
         'python -c '
-        '"import cv2;print(\'CVOK\')"',
+        '"import cv2;'
+        'print(\'CVOK\')"',
         quiet=True
     )
 
@@ -548,7 +1019,9 @@ def doctor(verbose=True):
             title="opencv 복구"
         )
 
-        fixed.append("opencv")
+        fixed.append(
+            "opencv"
+        )
 
     elif verbose:
 
@@ -556,9 +1029,35 @@ def doctor(verbose=True):
             "opencv : 정상"
         )
 
-    # =============================================================
+    # =================================================================
+    # OpenAI CLIP 확인
+    # =================================================================
+
+    rc, out = L.shell(
+        'python -c '
+        '"import clip;'
+        'print(\'CLIPOK\')"',
+        quiet=True
+    )
+
+    if "CLIPOK" in out:
+
+        if verbose:
+
+            L.log(
+                "OpenAI CLIP : 설치됨"
+            )
+
+    else:
+
+        L.log(
+            "OpenAI CLIP : 미설치 "
+            "(Forge는 open-clip-torch 경로 사용)"
+        )
+
+    # =================================================================
     # 결과
-    # =============================================================
+    # =================================================================
 
     if fixed:
 
@@ -580,49 +1079,57 @@ def doctor(verbose=True):
 # Forge 의존성 설치
 # =====================================================================
 
-def install_env(force=False, timeout=2700):
+def install_env(
+    force=False,
+    timeout=2700
+):
     """
     Forge 의존성을 설치한다.
 
-    매우 중요:
-    launch.py --exit가 실패하면 READY marker를 절대로 생성하지 않는다.
+    성공하지 않으면 READY marker를 만들지 않는다.
     """
 
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
     # 기존 marker
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
 
-    if os.path.exists(MARKER) and not force:
+    if (
+        os.path.exists(MARKER)
+        and not force
+    ):
 
         L.log(
-            "Forge 의존성 준비 완료 표식 발견 - 설치 단계 생략"
+            "Forge 의존성 준비 완료 표식 발견 "
+            "- 설치 단계 생략"
         )
 
-        # marker가 있어도 최소 검증은 수행
         _write_constraint()
         _patch_forge_requirements()
+        _patch_clip_launcher()
 
         doctor()
 
         return True
 
-    # -------------------------------------------------------------
-    # 준비
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # Forge 준비
+    # -----------------------------------------------------------------
 
     if not clone():
 
+        return False
+
+    if not pre_pin():
+
         L.err(
-            "Forge clone 실패"
+            "Forge 사전 호환성 준비 실패"
         )
 
         return False
 
-    pre_pin()
-
-    # -------------------------------------------------------------
-    # 기존 잘못된 marker 제거
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # marker 제거
+    # -----------------------------------------------------------------
 
     if os.path.exists(MARKER):
 
@@ -631,9 +1138,9 @@ def install_env(force=False, timeout=2700):
         except Exception:
             pass
 
-    # -------------------------------------------------------------
-    # Forge dependency 설치
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # dependency install
+    # -----------------------------------------------------------------
 
     L.banner(
         "Forge 의존성 설치 (launch.py --exit)"
@@ -665,21 +1172,18 @@ def install_env(force=False, timeout=2700):
     )
 
     t0 = time.time()
+
     rc = None
 
     while True:
 
         rc = proc.poll()
 
-        # ---------------------------------------------------------
-        # 프로세스 종료
-        # ---------------------------------------------------------
-
         if rc is not None:
 
             elapsed = (
-                (time.time() - t0) / 60
-            )
+                time.time() - t0
+            ) / 60
 
             if rc == 0:
 
@@ -694,16 +1198,18 @@ def install_env(force=False, timeout=2700):
                 L.err(
                     "의존성 설치 실패 "
                     "(rc=%s, %.1f분)"
-                    % (rc, elapsed)
+                    % (
+                        rc,
+                        elapsed
+                    )
                 )
 
             break
 
-        # ---------------------------------------------------------
-        # timeout
-        # ---------------------------------------------------------
-
-        if time.time() - t0 > timeout:
+        if (
+            time.time() - t0
+            > timeout
+        ):
 
             L.err(
                 "의존성 설치 타임아웃"
@@ -719,24 +1225,27 @@ def install_env(force=False, timeout=2700):
 
     f.close()
 
-    # -------------------------------------------------------------
-    # 로그 출력
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # 로그
+    # -----------------------------------------------------------------
 
     L.tail_file(
         LOGFILE,
-        40,
+        50,
         title="forge.log 끝부분"
     )
 
-    # =============================================================
-    # 실패 처리
-    # =============================================================
+    # -----------------------------------------------------------------
+    # 실패
+    # -----------------------------------------------------------------
 
     if rc != 0:
 
         L.err(
-            "Forge 의존성 설치가 실패했으므로 "
+            "Forge 의존성 설치 실패."
+        )
+
+        L.err(
             "READY marker를 생성하지 않습니다."
         )
 
@@ -744,19 +1253,20 @@ def install_env(force=False, timeout=2700):
 
         return False
 
-    # =============================================================
-    # 최종 doctor
-    # =============================================================
+    # -----------------------------------------------------------------
+    # doctor
+    # -----------------------------------------------------------------
 
     doctor()
 
-    # =============================================================
+    # -----------------------------------------------------------------
     # NumPy 최종 검증
-    # =============================================================
+    # -----------------------------------------------------------------
 
     rc_np, out_np = L.shell(
         'python -c '
-        '"import numpy;print(\'FINALNP=\'+numpy.__version__)"',
+        '"import numpy;'
+        'print(\'FINALNP=\'+numpy.__version__)"',
         quiet=True
     )
 
@@ -777,18 +1287,52 @@ def install_env(force=False, timeout=2700):
 
         L.err(
             "NumPy 최종 검증 실패 : %s"
-            % (final_np or "?")
+            % (
+                final_np or "?"
+            )
         )
 
         return False
 
-    L.ok(
-        "NumPy 최종 검증 : 1.26.4"
+    # -----------------------------------------------------------------
+    # protobuf 최종 검증
+    # -----------------------------------------------------------------
+
+    rc_pb, out_pb = L.shell(
+        'python -c '
+        '"import google.protobuf;'
+        'print(\'FINALPB=\'+'
+        'google.protobuf.__version__)"',
+        quiet=True
     )
 
-    # =============================================================
-    # Forge requirements 최종 검증
-    # =============================================================
+    final_pb = ""
+
+    for line in out_pb.splitlines():
+
+        if line.startswith("FINALPB="):
+
+            final_pb = line.split(
+                "=",
+                1
+            )[1].strip()
+
+            break
+
+    if final_pb != "3.20.0":
+
+        L.err(
+            "protobuf 최종 검증 실패 : %s"
+            % (
+                final_pb or "?"
+            )
+        )
+
+        return False
+
+    # -----------------------------------------------------------------
+    # requirements 검증
+    # -----------------------------------------------------------------
 
     req = os.path.join(
         FORGE,
@@ -809,14 +1353,20 @@ def install_env(force=False, timeout=2700):
 
             L.err(
                 "Forge requirements에 "
-                "numpy==1.26.2가 아직 남아 있습니다."
+                "numpy==1.26.2가 남아 있습니다."
             )
 
             return False
 
-    # =============================================================
-    # 성공 marker
-    # =============================================================
+    # -----------------------------------------------------------------
+    # CLIP launcher 검증
+    # -----------------------------------------------------------------
+
+    _patch_clip_launcher()
+
+    # -----------------------------------------------------------------
+    # READY marker
+    # -----------------------------------------------------------------
 
     with open(
         MARKER,
@@ -843,7 +1393,7 @@ def install_env(force=False, timeout=2700):
 
 def alive(timeout=5):
     """
-    Forge API가 실제 응답하는지 확인한다.
+    Forge API 응답 여부.
     """
 
     try:
@@ -864,14 +1414,17 @@ def alive(timeout=5):
 # Forge API 기동
 # =====================================================================
 
-def launch(wait=900, attempts=2):
+def launch(
+    wait=900,
+    attempts=2
+):
     """
-    Forge API를 기동한다.
+    Forge API 기동.
     """
 
-    # -------------------------------------------------------------
-    # 이미 기동 중
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # 이미 기동
+    # -----------------------------------------------------------------
 
     if alive():
 
@@ -881,9 +1434,9 @@ def launch(wait=900, attempts=2):
 
         return True
 
-    # -------------------------------------------------------------
-    # dependency 준비
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # dependency
+    # -----------------------------------------------------------------
 
     if not install_env():
 
@@ -893,9 +1446,9 @@ def launch(wait=900, attempts=2):
 
         return False
 
-    # -------------------------------------------------------------
-    # API 실행
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # launch
+    # -----------------------------------------------------------------
 
     for attempt in range(
         1,
@@ -904,7 +1457,10 @@ def launch(wait=900, attempts=2):
 
         L.banner(
             "Forge API 기동 시도 %d/%d"
-            % (attempt, attempts)
+            % (
+                attempt,
+                attempts
+            )
         )
 
         f = open(
@@ -936,28 +1492,34 @@ def launch(wait=900, attempts=2):
         )
 
         t0 = time.time()
+
         last = 0
 
-        while time.time() - t0 < wait:
+        while (
+            time.time() - t0
+            < wait
+        ):
 
-            # -----------------------------------------------------
-            # API 응답
-            # -----------------------------------------------------
+            # ---------------------------------------------------------
+            # API
+            # ---------------------------------------------------------
 
             if alive(5):
 
                 L.ok(
                     "API 응답 (%.0f초)"
-                    % (time.time() - t0)
+                    % (
+                        time.time() - t0
+                    )
                 )
 
                 f.close()
 
                 return True
 
-            # -----------------------------------------------------
-            # 프로세스 종료
-            # -----------------------------------------------------
+            # ---------------------------------------------------------
+            # process death
+            # ---------------------------------------------------------
 
             if proc.poll() is not None:
 
@@ -969,51 +1531,67 @@ def launch(wait=900, attempts=2):
 
                 break
 
-            # -----------------------------------------------------
-            # 진행상황
-            # -----------------------------------------------------
+            # ---------------------------------------------------------
+            # progress
+            # ---------------------------------------------------------
 
-            if time.time() - last > 60:
+            if (
+                time.time() - last
+                > 60
+            ):
 
                 last = time.time()
 
                 L.log(
                     "   기동 대기 %.0f초 ..."
-                    % (time.time() - t0)
+                    % (
+                        time.time() - t0
+                    )
                 )
 
             time.sleep(6)
 
         f.close()
 
-        # ---------------------------------------------------------
-        # 실패 로그
-        # ---------------------------------------------------------
+        # -------------------------------------------------------------
+        # failure log
+        # -------------------------------------------------------------
 
         txt = L.tail_file(
             LOGFILE,
-            50,
+            60,
             title="forge.log 끝부분"
         )
 
         low = txt.lower()
 
-        # ---------------------------------------------------------
-        # dependency 관련 실패
-        # ---------------------------------------------------------
+        # -------------------------------------------------------------
+        # dependency detection
+        # -------------------------------------------------------------
 
         if (
-            "resolutionimpossible" in low
-            or "numpy" in low
-            or "skimage" in low
-            or "scikit-image" in low
-            or "xformers" in low
-            or "dependency" in low
+            "resolutionimpossible"
+            in low
+            or "numpy"
+            in low
+            or "skimage"
+            in low
+            or "scikit-image"
+            in low
+            or "xformers"
+            in low
+            or "wandb"
+            in low
+            or "protobuf"
+            in low
+            or "clip"
+            in low
+            or "pkg_resources"
+            in low
         ):
 
             L.warn(
-                "의존성 문제로 판단 -> "
-                "doctor 재실행 후 재시도"
+                "의존성 문제 감지 -> doctor"
             )
 
             doctor()
@@ -1021,27 +1599,19 @@ def launch(wait=900, attempts=2):
         else:
 
             L.warn(
-                "원인 불명 -> doctor 후 재시도"
+                "원인 불명 -> doctor"
             )
 
             doctor(
                 verbose=False
             )
 
-        # ---------------------------------------------------------
-        # 프로세스 정리
-        # ---------------------------------------------------------
-
         _killpg(proc)
 
         time.sleep(5)
 
-    # -------------------------------------------------------------
-    # 최종 실패
-    # -------------------------------------------------------------
-
     L.err(
-        "Forge 기동 실패 - %s 를 확인하세요."
+        "Forge 기동 실패 - %s 확인"
         % LOGFILE
     )
 
@@ -1049,10 +1619,11 @@ def launch(wait=900, attempts=2):
 
 
 # =====================================================================
-# API 모델
+# 모델
 # =====================================================================
 
 def models():
+
     try:
 
         r = requests.get(
@@ -1067,7 +1638,12 @@ def models():
         return []
 
 
+# =====================================================================
+# 업스케일러
+# =====================================================================
+
 def upscalers():
+
     try:
 
         r = requests.get(
@@ -1086,14 +1662,14 @@ def upscalers():
 
 
 # =====================================================================
-# 체크포인트 검색
+# checkpoint
 # =====================================================================
 
 def resolve_checkpoint(
     want="novaanimexl_ilv190"
 ):
     """
-    원하는 체크포인트를 Forge API에서 찾는다.
+    원하는 체크포인트 검색.
     """
 
     for m in models():
@@ -1113,10 +1689,16 @@ def resolve_checkpoint(
 
             normalized = (
                 v.lower()
-                .replace(" ", "")
+                .replace(
+                    " ",
+                    ""
+                )
             )
 
-            if want.lower() in normalized:
+            if (
+                want.lower()
+                in normalized
+            ):
 
                 return (
                     m.get("title")
@@ -1136,21 +1718,34 @@ def apply_options(
     clip_skip=2
 ):
     """
-    Forge API 기본 옵션 적용.
+    Forge API 기본 옵션.
     """
 
     opts = {
-        "sd_model_checkpoint": ckpt_title,
-        "sd_vae": vae,
-        "CLIP_stop_at_last_layers": clip_skip,
 
-        "samples_save": False,
-        "grid_save": False,
+        "sd_model_checkpoint":
+            ckpt_title,
 
-        "live_previews_enable": False,
-        "show_progress_every_n_steps": 0,
+        "sd_vae":
+            vae,
 
-        "upscaler_for_img2img": "4x-UltraSharp",
+        "CLIP_stop_at_last_layers":
+            clip_skip,
+
+        "samples_save":
+            False,
+
+        "grid_save":
+            False,
+
+        "live_previews_enable":
+            False,
+
+        "show_progress_every_n_steps":
+            0,
+
+        "upscaler_for_img2img":
+            "4x-UltraSharp",
     }
 
     try:
@@ -1168,19 +1763,22 @@ def apply_options(
             % r.status_code
         )
 
-        return r.status_code == 200
+        return (
+            r.status_code == 200
+        )
 
     except Exception as e:
 
         L.warn(
-            "옵션 적용 실패: %s" % e
+            "옵션 적용 실패: %s"
+            % e
         )
 
         return False
 
 
 # =====================================================================
-# 인식 검증
+# 검증
 # =====================================================================
 
 def verify(
@@ -1189,9 +1787,6 @@ def verify(
         "4x-AnimeSharp",
     )
 ):
-    """
-    체크포인트 및 업스케일러 인식 여부 확인.
-    """
 
     ms = [
         m.get(
@@ -1204,11 +1799,13 @@ def verify(
     us = upscalers()
 
     L.log(
-        "체크포인트 : %s" % ms
+        "체크포인트 : %s"
+        % ms
     )
 
     L.log(
-        "업스케일러 : %s" % us
+        "업스케일러 : %s"
+        % us
     )
 
     ok_ck = any(
@@ -1219,6 +1816,7 @@ def verify(
     miss = [
         n
         for n in need_upscalers
+
         if not any(
             n.lower() == u.lower()
             for u in us
@@ -1249,10 +1847,12 @@ def verify(
 # Forge 최종 보장
 # =====================================================================
 
-def ensure(clip_skip=2):
+def ensure(
+    clip_skip=2
+):
     """
     어떤 상태에서 호출해도
-    '사용 가능한 Forge'를 보장한다.
+    사용 가능한 Forge를 보장.
     """
 
     if not alive():
@@ -1283,7 +1883,7 @@ def ensure(clip_skip=2):
 
 def stop(wait=90):
     """
-    Forge API 종료.
+    Forge 종료.
     """
 
     L.log(
@@ -1301,18 +1901,23 @@ def stop(wait=90):
         pass
 
     subprocess.run(
-        "pkill -f 'launch.py' > /dev/null 2>&1",
+        "pkill -f 'launch.py' "
+        "> /dev/null 2>&1",
         shell=True
     )
 
     subprocess.run(
-        "pkill -f 'webui.py' > /dev/null 2>&1",
+        "pkill -f 'webui.py' "
+        "> /dev/null 2>&1",
         shell=True
     )
 
     t0 = time.time()
 
-    while time.time() - t0 < wait:
+    while (
+        time.time() - t0
+        < wait
+    ):
 
         if not alive(3):
 
