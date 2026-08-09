@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-09 13:09:22 UTC",
+ "updated": "2026-08-09 13:09:36 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -25,17 +25,17 @@
   },
   "cell12_hf_backup": {
    "status": "done",
-   "ts": "2026-08-09 12:44:46 UTC",
+   "ts": "2026-08-09 13:09:36 UTC",
    "note": "lora=0"
   },
   "cell11_cdn": {
    "status": "done",
-   "ts": "2026-08-09 12:44:46 UTC",
+   "ts": "2026-08-09 13:09:36 UTC",
    "note": "fail=0"
   },
   "cdn_purged": {
    "status": "done",
-   "ts": "2026-08-09 12:44:46 UTC",
+   "ts": "2026-08-09 13:09:36 UTC",
    "note": ""
   },
   "cell10_push": {
@@ -269,9 +269,15 @@
    "ts": "2026-08-09 13:09:22 UTC",
    "msg": "stage 품질 검증/재생성",
    "pushed": true
+  },
+  {
+   "hash": "17e02e659b1314d8954c7c3a330d6cb1cc44c864",
+   "ts": "2026-08-09 13:09:25 UTC",
+   "msg": "final sync",
+   "pushed": true
   }
  ],
- "last_commit": "84eeb8930db217d0889dfad22f7d4a98ef3ee7a8",
+ "last_commit": "17e02e659b1314d8954c7c3a330d6cb1cc44c864",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -296,6 +302,9 @@
   "2026-08-09 12:44:50 UTC | cellZ_package | done | ",
   "2026-08-09 13:02:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 13:02:39 UTC | cell08R_restore | done | ",
-  "2026-08-09 13:08:00 UTC | cell09_verify | partial | miss=796 bad=0 blur=0"
+  "2026-08-09 13:08:00 UTC | cell09_verify | partial | miss=796 bad=0 blur=0",
+  "2026-08-09 13:09:36 UTC | cell12_hf_backup | done | lora=0",
+  "2026-08-09 13:09:36 UTC | cell11_cdn | done | fail=0",
+  "2026-08-09 13:09:36 UTC | cdn_purged | done | "
  ]
 }
