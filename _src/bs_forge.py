@@ -56,6 +56,7 @@ def start(wait=900):
     t0 = time.time()
     while time.time() - t0 < wait:
         if alive(5):
+            _patch_processing()
             print(f"[forge] 기동 완료 ({int(time.time()-t0)}초)")
             return True
         if p.poll() is not None:
