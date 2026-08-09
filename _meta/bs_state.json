@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-09 12:11:15 UTC",
+ "updated": "2026-08-09 12:11:18 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -48,9 +48,15 @@
    "ts": "2026-08-09 12:11:15 UTC",
    "msg": "stage LoRA 소스 생성",
    "pushed": true
+  },
+  {
+   "hash": "064a8f9ab08ad0353c7d39bf3f0b7e3fedba5469",
+   "ts": "2026-08-09 12:11:18 UTC",
+   "msg": "stage 선별 + 데이터셋",
+   "pushed": true
   }
  ],
- "last_commit": "b8cd3d67e7fea720315795707678e74c26ff5e5c",
+ "last_commit": "064a8f9ab08ad0353c7d39bf3f0b7e3fedba5469",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
