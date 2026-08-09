@@ -25,10 +25,25 @@ def alive(timeout=8):
         return requests.get(f"{API}/sdapi/v1/sd-models", timeout=timeout).ok
     except Exception:
         return False
+def _patch_processing():
+    """hr_additional_modules가 None일 때 터지는 Forge 버그 패치. 매 기동시 자동 적용."""
+    p = os.path.join(DIR, "modules", "processing.py")
+    try:
+        s = open(p, encoding="utf-8").read()
+        old = "and 'Use same choices' not in self.hr_additional_modules:"
+        new = "and self.hr_additional_modules and 'Use same choices' not in self.hr_additional_modules:"
+        if old in s and "self.hr_additional_modules and 'Use same choices'" not in s:
+            s = s.replace(old, new)
+            open(p, "w", encoding="utf-8").write(s)
+            print("[forge] processing.py 패치 적용")
+    except Exception as e:
+        print("[forge] 패치 실패(무시하고 진행):", e)
 
+        
 def start(wait=900):
     if alive():
         print("[forge] 이미 기동 중")
+        _patch_processing()
         return True
     env = dict(os.environ)
     env.update({"PYTHONUNBUFFERED": "1", "PYTHONNOUSERSITE": "1",
