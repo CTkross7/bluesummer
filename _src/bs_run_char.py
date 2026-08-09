@@ -1,52 +1,60 @@
-
 # -*- coding: utf-8 -*-
+"""인물 60장/인 생성. run(code) / redo(code, ["W03","B07"])"""
 import os, sys, time
 sys.path.insert(0, "/kaggle/working/BLUESUMMER")
-import bs_state as ST, bs_common as P, bs_engine as E, bs_upload as U, bs_autosave as AS
+import bs_config as C, bs_common as K, bs_engine as E, bs_state as ST
+import bs_upload as U, bs_log as L
 
-OUT = os.path.join(ST.DIST, "c")
-SIZE = (640, 960)
+DEST = os.path.join(ST.DIST, "c")
 
-def one(code):
-    c, o, e = code[:3], code[3], code[4:]
-    path = os.path.join(OUT, code + ".webp")
-    if E.exists_ok(path):
-        return False
-    pr = P.char_prompt(c, o, e)
-    img = E.txt2img(pr, 832, 1216, seed=E.seed_of(code), use_ad=True,
-                    face_prompt=f"{P.TRIGGER[c]}, detailed face, clean eyes")
-    E.save_webp(img, path, SIZE, 82)
-    U.tick(code)
-    return True
 
-def run(chars=None, deadline=None):
-    chars = chars or ST.CHARS
-    for c in chars:
-        todo = [f"{c}{o}{e}" for o in ST.OUTFIT for e in ST.EMO
-                if not E.exists_ok(os.path.join(OUT, f"{c}{o}{e}.webp"))]
-        if not todo:
-            print(f"{c}: 60/60 완료")
-            continue
-        print(f"── {c} : {len(todo)}장 남음")
-        for i, code in enumerate(todo):
-            if deadline and time.time() > deadline:
-                U.flush("char partial"); return False
-            try:
-                one(code)
-            except Exception as ex:
-                print("  실패:", code, ex)
-            if (i + 1) % 20 == 0:
-                print(f"   {i+1}/{len(todo)}")
-        ST.rescan(); AS.flush(f"char {c}")
-    return True
+def _gen(code, combos, use_lora=None, overwrite=False, budget=None):
+    os.makedirs(DEST, exist_ok=True)
+    if use_lora is None:
+        use_lora = K.lora_ready(code)
+    pr = L.Progress(len(combos), "인물 " + code)
+    L.log("[%s] %d장 / LoRA=%s" % (code, len(combos), "ON" if use_lora else "OFF"))
+    fails = []
+    for (o, e) in combos:
+        if budget is not None and not budget.can(ST.timing_avg("char",
+                                                               C.EST_CHAR_MIN * 60) / 60):
+            L.warn("[%s] 시간 예산 부족 - 중단" % code)
+            break
+        name = "%s%s%s" % (code, o, e)
+        path = os.path.join(DEST, name + ".webp")
+        salt = ST.retry_of(name)
+        p = K.build_prompt(code, o, e, use_lora=use_lora)
+        _, _, note = E.make(p, C.NEG_CHAR, path, seed=K.seed_of(code, o, e, salt),
+                            overwrite=overwrite)
+        if note == "fail":
+            fails.append(name)
+            ST.bump_retry(name)
+        pr.step("%s.webp %s" % (name, note))
+        if pr.n % C.PUSH_EVERY == 0:
+            U.push("char %s %d" % (code, pr.n), force=True)
+    pr.done()
+    ST.rescan()
+    U.push("char %s done" % code, force=True)
+    if fails:
+        L.warn("[%s] 실패 %d건 : %s" % (code, len(fails), fails[:10]))
+    return fails
 
-def redo(ch, combos):
-    for cb in combos:
-        p = os.path.join(OUT, f"{ch}{cb}.webp")
-        if os.path.exists(p):
-            os.remove(p)
-        try:
-            one(f"{ch}{cb}")
-        except Exception as e:
-            print("  redo 실패:", ch + cb, e)
-    U.flush(f"redo {ch}")
+
+def run(code, use_lora=None, overwrite=False, budget=None):
+    code = code.upper()
+    return _gen(code, [(o, e) for o in K.OUTFIT_ORDER for e in K.EMO_ORDER],
+                use_lora, overwrite, budget)
+
+
+def redo(code, combos, use_lora=None, budget=None):
+    code = code.upper()
+    return _gen(code, [(c[0], c[1:]) for c in combos], use_lora, True, budget)
+
+
+def run_group(codes, **kw):
+    for c in codes:
+        run(c, **kw)
+
+
+if __name__ == "__main__":
+    run(sys.argv[1])

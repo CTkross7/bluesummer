@@ -1,126 +1,229 @@
-
 # -*- coding: utf-8 -*-
-import os, sys, json, time, glob, shutil, subprocess
+"""kohya sd-scripts 설치 / TOML 생성 / 학습 / 배치.
+   T4(bf16 미지원) 자동 감지, bitsandbytes 실패 시 Adafactor 폴백,
+   중단 시 --resume 로 이어서 학습."""
+import os, sys, glob, shutil, subprocess, time, requests
 sys.path.insert(0, "/kaggle/working/BLUESUMMER")
-import bs_state as ST, bs_common as P, bs_forge as F, bs_autosave as AS
+import bs_config as C, bs_common as K, bs_state as ST, bs_log as L, bs_forge as FG
 
-ENV = json.load(open("/kaggle/temp/bs_env.json", encoding="utf-8"))
-C, SEC = ENV["cfg"], ENV["secrets"]
-VK, SDS = C["VENV_KOHYA"], C["SDS_DIR"]
-PY = f"{VK}/bin/python"
-CKPT = f"{C['MODEL_DIR']}/Stable-diffusion/bs_base.safetensors"
-TOML = os.path.join(ST.BASE, "toml")
-LOGD = os.path.join(ST.BASE, "logs")
+KOHYA = "/kaggle/temp/sd-scripts"
+CFG = os.path.join(ST.BASE, "lora", "_config")
+MARKER = "/kaggle/temp/.kohya_ready"
+os.makedirs(CFG, exist_ok=True)
+os.makedirs(ST.LORA_OUT, exist_ok=True)
 
-def sh(cmd, cwd=None, show=True):
-    p = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True)
-    out = (p.stdout or "") + (p.stderr or "")
-    if show and out.strip():
-        print(out[-2000:])
-    return p.returncode, out
 
-def setup():
-    if os.path.exists(PY) and ST.is_done("kohya_env"):
-        return True
-    sh("pip install -q --no-input uv", show=False)
-    sh("uv python install 3.10", show=False)
-    if not os.path.exists(PY):
-        rc, _ = sh(f"uv venv {VK} --python 3.10")
-        if rc != 0:
-            sh(f"python3.10 -m venv {VK}")
-    U = f"uv pip install --python {PY} -q"
-    if not os.path.isdir(os.path.join(SDS, ".git")):
-        shutil.rmtree(SDS, ignore_errors=True)
-        sh(f"git clone https://github.com/kohya-ss/sd-scripts.git {SDS}",
-           cwd="/kaggle/temp")
-    rc, out = sh(f'git rev-list -1 --before="{C["SDS_PIN_DATE"]}" origin/main',
-                 cwd=SDS, show=False)
-    if out.strip():
-        sh(f"git checkout -q {out.strip()}", cwd=SDS, show=False)
-    sh(f"{U} --index-url https://download.pytorch.org/whl/cu121 "
-       f"torch==2.4.1 torchvision==0.19.1")
-    sh(f"{U} 'accelerate==0.33.0' 'transformers==4.44.0' 'diffusers[torch]==0.25.0' "
-       f"'safetensors==0.4.4' 'huggingface-hub==0.24.5' 'numpy==1.26.4' "
-       f"'opencv-python-headless==4.10.0.84' einops ftfy toml voluptuous "
-       f"'altair<5' 'rich' 'sentencepiece' 'imagesize' 'pytorch-lightning==1.9.0' "
-       f"'library' 2>/dev/null; true")
-    sh(f"{U} 'accelerate==0.33.0' 'transformers==4.44.0' 'diffusers[torch]==0.25.0' "
-       f"'safetensors==0.4.4' 'numpy==1.26.4' einops ftfy toml voluptuous "
-       f"imagesize sentencepiece")
-    rc, _ = sh(f'{PY} -c "import torch;print(torch.__version__, torch.cuda.is_available())"')
-    ST.mark("kohya_env", "done" if rc == 0 else "failed")
-    return rc == 0
-
-ARGS = (
- "--network_module networks.lora --network_dim 32 --network_alpha 16 "
- "--network_train_unet_only "
- "--learning_rate 1e-4 --unet_lr 1e-4 "
- "--optimizer_type Adafactor "
- '--optimizer_args "relative_step=False" "scale_parameter=False" "warmup_init=False" '
- "--lr_scheduler constant_with_warmup --lr_warmup_steps 100 "
- "--max_train_epochs 8 --save_every_n_epochs 4 "
- "--mixed_precision fp16 --save_precision fp16 "          # T4 는 bf16 불가
- "--gradient_checkpointing --cache_latents --cache_latents_to_disk "
- "--no_half_vae --sdpa --train_batch_size 1 "
- "--max_data_loader_n_workers 2 --persistent_data_loader_workers "
- "--min_snr_gamma 5 --noise_offset 0.0357 --seed 42 "
- "--max_token_length 225 --caption_extension .txt "
- "--save_model_as safetensors"
-)
-
-def hf_push(path):
-    if not (SEC.get("HF_TOKEN") and SEC.get("HF_USER")):
-        return
+def caps():
+    """(precision, optimizer, gpu_count) 를 환경에 맞춰 결정."""
+    prec, gpus = "fp16", 0
     try:
-        from huggingface_hub import HfApi, create_repo
-        rid = f"{SEC['HF_USER']}/bluesummer-lora"
-        create_repo(rid, repo_type="dataset", private=True,
-                    token=SEC["HF_TOKEN"], exist_ok=True)
-        HfApi(token=SEC["HF_TOKEN"]).upload_file(
-            path_or_fileobj=path, path_in_repo=os.path.basename(path),
-            repo_id=rid, repo_type="dataset")
-        print("   HF 업로드 완료:", os.path.basename(path))
-    except Exception as e:
-        print("   HF 업로드 실패:", e)
+        import torch
+        gpus = torch.cuda.device_count()
+        if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+            prec = "bf16"
+    except Exception:
+        pass
+    opt = "AdamW8bit"
+    rc, out = L.shell('python -c "import bitsandbytes;print(\'BNBOK\')"', quiet=True)
+    if "BNBOK" not in out:
+        opt = "Adafactor"
+    return prec, opt, gpus
 
-def train_one(c):
-    out = os.path.join(ST.LORA_OUT, f"bs_{c.lower()}.safetensors")
-    if os.path.exists(out):
-        print(f"{c}: 이미 학습됨")
+
+def install():
+    if os.path.exists(MARKER):
+        L.log("kohya 준비 완료 표식 발견")
         return True
-    toml = os.path.join(TOML, f"{c}.toml")
-    if not os.path.exists(toml):
-        print(f"{c}: toml 없음 — 건너뜀")
+    L.banner("kohya sd-scripts 설치")
+    if not os.path.isdir(os.path.join(KOHYA, ".git")):
+        L.shell("git clone --depth 1 https://github.com/kohya-ss/sd-scripts %s" % KOHYA,
+                title="sd-scripts clone")
+    L.shell('pip install -q "accelerate>=0.30,<1.2" "transformers>=4.44,<4.57" '
+            '"diffusers>=0.25,<0.36" "safetensors>=0.4" toml voluptuous ftfy '
+            '"huggingface_hub>=0.25" opencv-python-headless einops', title="학습 의존성")
+    L.shell('pip install -q bitsandbytes || true', quiet=True, title="bitsandbytes(선택)")
+    cfgdir = os.path.expanduser("~/.cache/huggingface/accelerate")
+    os.makedirs(cfgdir, exist_ok=True)
+    prec, opt, gpus = caps()
+    with open(os.path.join(cfgdir, "default_config.yaml"), "w") as f:
+        f.write("compute_environment: LOCAL_MACHINE\ndistributed_type: 'NO'\n"
+                "downcast_bf16: 'no'\ngpu_ids: '0'\nmachine_rank: 0\n"
+                "main_training_function: main\nmixed_precision: %s\nnum_machines: 1\n"
+                "num_processes: 1\nrdzv_backend: static\nsame_network: true\n"
+                "use_cpu: false\n" % prec)
+    open(MARKER, "w").write(time.strftime("%Y-%m-%d %H:%M:%S"))
+    L.ok("kohya 준비 완료 (precision=%s / optimizer=%s / GPU=%d)" % (prec, opt, gpus))
+    return True
+
+
+DATASET_TPL = """[general]
+shuffle_caption = true
+keep_tokens = 1
+caption_extension = ".txt"
+enable_bucket = true
+bucket_no_upscale = false
+min_bucket_reso = 640
+max_bucket_reso = 1536
+
+[[datasets]]
+resolution = {res}
+batch_size = {batch}
+
+  [[datasets.subsets]]
+  image_dir = "{img_dir}"
+  num_repeats = {repeats}
+"""
+
+TRAIN_TPL = """[model_arguments]
+pretrained_model_name_or_path = "{ckpt}"
+vae = "{vae}"
+
+[additional_network_arguments]
+network_module = "networks.lora"
+network_dim = {dim}
+network_alpha = {alpha}
+network_train_unet_only = {unet_only}
+
+[optimizer_arguments]
+optimizer_type = "{opt}"
+learning_rate = 1e-4
+unet_lr = 1e-4
+text_encoder_lr = 2e-5
+lr_scheduler = "cosine_with_restarts"
+lr_scheduler_num_cycles = 3
+lr_warmup_steps = 50
+max_grad_norm = 1.0
+
+[training_arguments]
+output_dir = "{out_dir}"
+output_name = "bs_{code}_{ver}"
+save_precision = "{prec}"
+save_every_n_epochs = 2
+save_state = true
+max_train_epochs = {epochs}
+train_batch_size = {batch}
+mixed_precision = "{prec}"
+gradient_checkpointing = true
+gradient_accumulation_steps = 1
+seed = 1234
+clip_skip = 2
+min_snr_gamma = 5
+noise_offset = 0.03
+sdpa = true
+no_half_vae = true
+cache_latents = true
+cache_latents_to_disk = true
+persistent_data_loader_workers = true
+max_data_loader_n_workers = 2
+logging_dir = "{log_dir}"
+log_prefix = "bs_{code}_"
+# IL v19.0 은 NoobAI EPS 기반 -> v_parameterization / zero_terminal_snr 사용 금지
+"""
+
+
+def make_cfg(code, batch=None):
+    code = code.upper()
+    batch = batch or C.LORA_BATCH
+    prec, opt, gpus = caps()
+    img_root = os.path.join(ST.BASE, "lora", code, "img")
+    subs = sorted(glob.glob(os.path.join(img_root, "*_*")))
+    if not subs:
+        L.warn("[%s] 데이터셋 없음 - bs_dataset 먼저" % code)
+        return None
+    img_dir = subs[0]
+    repeats = int(os.path.basename(img_dir).split("_", 1)[0])
+    out_dir = os.path.join(ST.BASE, "lora", code, "model")
+    log_dir = os.path.join(ST.BASE, "lora", code, "log")
+    os.makedirs(out_dir, exist_ok=True)
+    os.makedirs(log_dir, exist_ok=True)
+    d = os.path.join(CFG, code + "_dataset.toml")
+    t = os.path.join(CFG, code + "_train.toml")
+    with open(d, "w", encoding="utf-8") as f:
+        f.write(DATASET_TPL.format(res=C.DATASET_RES, batch=batch,
+                                   img_dir=img_dir, repeats=repeats))
+    with open(t, "w", encoding="utf-8") as f:
+        f.write(TRAIN_TPL.format(ckpt=C.CKPT_PATH, vae=C.VAE_PATH, out_dir=out_dir,
+                                 log_dir=log_dir, code=code, ver=C.LORA_VER,
+                                 batch=batch, prec=prec, opt=opt,
+                                 epochs=C.LORA_EPOCHS, dim=C.LORA_DIM,
+                                 alpha=C.LORA_ALPHA,
+                                 unet_only=str(not C.LORA_TRAIN_TE).lower()))
+    trig = K.CHARS[code]["trigger"]
+    with open(os.path.join(CFG, code + "_sample.txt"), "w", encoding="utf-8") as f:
+        f.write("%s, %s, %s, 1girl, solo, %s, upper body, looking at viewer, "
+                "simple background, BREAK, %s --n %s --w 832 --h 1216 --d 1234 "
+                "--l 4.5 --s 26\n" % (C.QUALITY_HEAD, C.STYLE_BA, trig,
+                                      K.CHARS[code]["anchor"], C.TAIL, C.NEG_DATASET))
+    L.ok("[%s] TOML 생성 (precision=%s optimizer=%s)" % (code, prec, opt))
+    return t, d
+
+
+def _resume_arg(code):
+    st_dirs = sorted(glob.glob(os.path.join(ST.BASE, "lora", code.upper(),
+                                            "model", "*-state*")))
+    if st_dirs:
+        L.log("[%s] 이전 학습 상태 발견 -> 이어서 학습" % code)
+        return ' --resume "%s"' % st_dirs[-1]
+    return ""
+
+
+def train(code, batch=None, gpu_id=None):
+    code = code.upper()
+    install()
+    r = make_cfg(code, batch)
+    if not r:
         return False
-    os.makedirs(ST.LORA_OUT, exist_ok=True)
-    os.makedirs(LOGD, exist_ok=True)
-    cmd = (f"{VK}/bin/accelerate launch --num_cpu_threads_per_process 2 "
-           f"--mixed_precision fp16 --num_processes 1 --gpu_ids 0 "
-           f"sdxl_train_network.py "
-           f"--pretrained_model_name_or_path {CKPT} "
-           f"--dataset_config {toml} "
-           f"--output_dir {ST.LORA_OUT} --output_name bs_{c.lower()} "
-           f"--logging_dir {LOGD} {ARGS}")
-    print(f"── {c} 학습 시작 (T4 기준 약 55분)")
-    rc, log = sh(cmd, cwd=SDS, show=False)
-    tail = "\n".join(log.strip().splitlines()[-25:])
-    print(tail)
-    ok = os.path.exists(out)
-    ST.mark(f"lora_{c}", "done" if ok else "failed", tail[-300:])
+    t, d = r
+    script = os.path.join(KOHYA, "sdxl_train_network.py")
+    if not os.path.exists(script):
+        L.err("sdxl_train_network.py 없음")
+        return False
+    prec, opt, gpus = caps()
+    env_prefix = ""
+    if gpu_id is not None:
+        env_prefix = "CUDA_VISIBLE_DEVICES=%d " % gpu_id
+    cmd = ('cd %s && %saccelerate launch --num_cpu_threads_per_process 2 '
+           '--mixed_precision %s "%s" --config_file "%s" --dataset_config "%s" '
+           '--sample_prompts "%s" --sample_every_n_epochs 2 --sample_sampler euler_a%s'
+           % (KOHYA, env_prefix, prec, script, t, d,
+              os.path.join(CFG, code + "_sample.txt"), _resume_arg(code)))
+    L.banner("LoRA 학습 시작 : %s" % code)
+    t0 = time.time()
+    rc, out = L.shell(cmd, timeout=60 * 240, tail=25, title="accelerate launch")
+    mins = (time.time() - t0) / 60
+    made = glob.glob(os.path.join(ST.BASE, "lora", code, "model",
+                                  "bs_%s_%s*.safetensors" % (code, C.LORA_VER)))
+    ok = rc == 0 and bool(made)
+    ST.mark("lora_%s" % code, "done" if ok else "failed", "%.1f분 rc=%s" % (mins, rc))
     if ok:
-        hf_push(out)
-        AS.flush(f"lora {c}")
+        L.ok("[%s] 학습 완료 %.1f분 / 산출 %d개" % (code, mins, len(made)))
+    else:
+        L.err("[%s] 학습 실패 rc=%s (%.1f분)" % (code, rc, mins))
     return ok
 
-def run(chars=None, deadline=None):
-    if not setup():
-        print("kohya 환경 구성 실패")
-        return False
-    F.stop()                      # VRAM 확보 (동시 구동은 반드시 OOM)
-    time.sleep(10)
-    for c in (chars or ST.CHARS):
-        if deadline and time.time() > deadline - 60 * 60:
-            print("남은 시간 부족 — 다음 세션에서 이어감")
-            return False
-        train_one(c)
-    return True
+
+def deploy():
+    dst = "/kaggle/temp/models/Lora"
+    os.makedirs(dst, exist_ok=True)
+    n = 0
+    for code in K.CHARS:
+        cands = sorted(glob.glob(os.path.join(
+            ST.BASE, "lora", code, "model",
+            "bs_%s_%s*.safetensors" % (code, C.LORA_VER))))
+        if not cands:
+            continue
+        final = [c for c in cands
+                 if c.endswith("bs_%s_%s.safetensors" % (code, C.LORA_VER))]
+        src = final[0] if final else cands[-1]
+        name = "bs_%s_%s.safetensors" % (code, C.LORA_VER)
+        shutil.copy2(src, os.path.join(dst, name))
+        shutil.copy2(src, os.path.join(ST.LORA_OUT, name))
+        n += 1
+    L.ok("LoRA %d개 배치 -> %s" % (n, dst))
+    try:
+        requests.post(FG.API + "/sdapi/v1/refresh-loras", timeout=120)
+        L.ok("Forge LoRA 목록 갱신")
+    except Exception as e:
+        L.log("refresh 생략(Forge 미기동): %s" % e)
+    ST.rescan()
+    return n
