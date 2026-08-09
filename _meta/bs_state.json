@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-09 12:11:59 UTC",
+ "updated": "2026-08-09 12:12:41 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -60,9 +60,15 @@
    "ts": "2026-08-09 12:11:20 UTC",
    "msg": "stage LoRA 학습",
    "pushed": true
+  },
+  {
+   "hash": "c7663cd2c61be26140dd5cae7a2477bbc4154eb1",
+   "ts": "2026-08-09 12:12:02 UTC",
+   "msg": "stage 인물 720장",
+   "pushed": true
   }
  ],
- "last_commit": "475b30d40584bbdbc3b22ef3c5d7cdf09ab75f5d",
+ "last_commit": "c7663cd2c61be26140dd5cae7a2477bbc4154eb1",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
