@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
-"""BLUE SUMMER v3 : 화질·학습·자동화 규격의 단일 원천."""
+"""BLUE SUMMER v3.1 : 화질·학습·자동화 규격의 단일 원천.
+
+v3.1 변경점 (extras 정체 사고 대응)
+  · EXTRAS_ENABLE 기본 False  - 2차 ESRGAN 업스케일이 장당 4~8분을 잡아먹고
+    512x768 최종본에는 거의 기여하지 않으므로 기본 경로에서 제외한다.
+  · LOCAL_SHARPEN True        - LANCZOS 축소 직후 UnsharpMask 로 라인 선예도 확보.
+  · EXTRAS_* 안전장치 추가    - 입력 픽셀 상한 / 단일 업스케일러 / 하드 타임아웃 /
+    느리면 세션 내 자동 비활성화.
+"""
 import os
 
 # -------------------------------------------------- 모델
@@ -11,11 +19,25 @@ VAE_NAME    = "sdxl_vae.safetensors"
 VAE_PATH    = "/kaggle/temp/models/VAE/" + VAE_NAME
 CLIP_SKIP   = 2
 
-# -------------------------------------------------- 업스케일러 (2종 상시)
-UPSCALER_HIRES = "4x-UltraSharp"   # Hires fix 1차 : 텍스처·의상 디테일
-UPSCALER_LINE  = "4x-AnimeSharp"   # extras 2차   : 라인아트 선예도
-EXTRAS_BLEND   = 0.55
-EXTRAS_SCALE   = 1.6
+# -------------------------------------------------- 업스케일러
+UPSCALER_HIRES = "4x-UltraSharp"   # Hires fix 1차 : 텍스처·의상 디테일 (항상 사용)
+UPSCALER_LINE  = "4x-AnimeSharp"   # extras 2차   : 라인아트 (선택 사용)
+
+# -------------------------------------------------- extras(2차 정제) 정책
+EXTRAS_ENABLE      = False     # 기본 OFF. True 로 바꾸면 다시 사용한다.
+EXTRAS_DUAL        = False     # True 면 업스케일러 2종 블렌드(=구 동작, 2배 느림)
+EXTRAS_SCALE       = 1.35      # 2.0 이상은 T4 에서 비현실적
+EXTRAS_BLEND       = 0.55      # EXTRAS_DUAL=True 일 때만 의미 있음
+EXTRAS_MAX_INPUT_PX = 1200000  # 입력이 이보다 크면 먼저 LANCZOS 축소 후 투입
+EXTRAS_TIMEOUT     = 300       # 하드 타임아웃(초). 초과하면 원본을 그대로 쓴다
+EXTRAS_SLOW_SEC    = 150       # 이보다 느리면 '느림' 카운트
+EXTRAS_SLOW_LIMIT  = 2         # 느림/실패가 이 횟수를 넘으면 세션 내 자동 비활성화
+
+# -------------------------------------------------- 로컬 샤프닝 (extras 대체)
+LOCAL_SHARPEN     = True
+SHARPEN_RADIUS    = 1.0
+SHARPEN_PERCENT   = 55
+SHARPEN_THRESHOLD = 3
 
 # -------------------------------------------------- 샘플링 (IL v19.0 공식 권장)
 SAMPLER    = "Euler a"
@@ -97,8 +119,8 @@ ENABLE_LORA   = True
 LORA_VER      = "v3"
 LORA_WEIGHT   = 0.85
 DATASET_RES   = 1024
-LORA_SRC_N    = 48          # 인당 후보 장수
-LORA_SELECT_N = 24          # 자동 선별 장수
+LORA_SRC_N    = 48
+LORA_SELECT_N = 24
 LORA_REPEATS  = 10
 LORA_EPOCHS   = 8
 LORA_BATCH    = 1
@@ -106,12 +128,24 @@ LORA_DIM, LORA_ALPHA = 32, 16
 LORA_TRAIN_TE = True
 
 # -------------------------------------------------- 자동화 / 예산
-PUSH_EVERY      = 20        # N장마다 GitHub 푸시
+PUSH_EVERY      = 20
 AUTOSAVE_MIN    = 20
-EST_CHAR_MIN    = 1.9       # 인물 1장 예상 소요(분) - 실측되면 자동 대체
-EST_BG_MIN      = 1.6
+EST_CHAR_MIN    = 2.3       # extras 제거 후 실측 기준(생성 2분 + 저장)
+EST_BG_MIN      = 2.0
 EST_UI_MIN      = 1.0
-EST_LORASRC_MIN = 1.3
-EST_TRAIN_MIN   = 95.0      # LoRA 1인 학습 예상(분)
+EST_LORASRC_MIN = 1.6
+EST_TRAIN_MIN   = 95.0
 SMOKE_TEST      = os.environ.get("BS_SMOKE", "0") == "1"
 PURGE_TAG       = "v3-nova19"
+
+# -------------------------------------------------- 진단 / 로깅
+DEBUG              = os.environ.get("BS_DEBUG", "1") == "1"
+VERBOSE_GEN        = True
+PROGRESS_POLL_SEC  = 5.0
+HEARTBEAT_SEC      = 30.0
+STALL_WARN_SEC     = 180.0
+FORGE_LOG_TAIL     = True
+FORGE_LOG_TAIL_SEC = 4.0
+FORGE_LOG_TAIL_MAX = 3
+GEN_TIMEOUT        = 1800
+VRAM_LOG           = True
