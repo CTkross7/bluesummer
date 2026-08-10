@@ -1,16 +1,16 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-10 09:58:03 UTC",
+ "updated": "2026-08-10 10:54:18 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
-   "ts": "2026-08-10 07:40:21 UTC",
+   "ts": "2026-08-10 10:34:18 UTC",
    "note": "state/git/autosave/log/budget"
   },
   "cell08R_restore": {
    "status": "done",
-   "ts": "2026-08-10 07:40:22 UTC",
+   "ts": "2026-08-10 10:34:20 UTC",
    "note": ""
   },
   "cell08P_purge": {
@@ -55,8 +55,8 @@
   },
   "cell08_modules": {
    "status": "done",
-   "ts": "2026-08-10 07:42:35 UTC",
-   "note": "128s/장 (extras off)"
+   "ts": "2026-08-10 10:36:41 UTC",
+   "note": "130s/장 (extras off)"
   },
   "autosave_last": {
    "status": "done",
@@ -102,17 +102,11 @@
  "retry": {},
  "timing": {
   "char": {
-   "n": 6,
-   "sum": 768.385336637497
+   "n": 7,
+   "sum": 898.573312997818
   }
  },
  "commits": [
-  {
-   "hash": "90402bba9ec0d75a0a799c4222ef7757ee1fb273",
-   "ts": "2026-08-09 12:38:56 UTC",
-   "msg": "stage LoRA 소스 생성",
-   "pushed": true
-  },
   {
    "hash": "bec1bcbb66fedcb88cab99d68bc40558f25e0b8a",
    "ts": "2026-08-09 12:38:58 UTC",
@@ -466,9 +460,15 @@
    "ts": "2026-08-10 09:48:09 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "9eb57cd08ddd60550ecd6ef5d2c2fe914dd2a79c",
+   "ts": "2026-08-10 09:58:05 UTC",
+   "msg": "lora src HTI",
+   "pushed": true
   }
  ],
- "last_commit": "b5fa931217f8b68f3bce667bb2d9fd5f0c61ab8f",
+ "last_commit": "9eb57cd08ddd60550ecd6ef5d2c2fe914dd2a79c",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -575,6 +575,9 @@
   "2026-08-10 09:08:05 UTC | autosave_last | done | 8ccdc44bd7c11818eb52f0748aeac89f486529a1",
   "2026-08-10 09:28:07 UTC | autosave_last | done | 7edc836cf063e6a77a0d1794f1b52e0fecc775c7",
   "2026-08-10 09:48:09 UTC | autosave_last | done | b5fa931217f8b68f3bce667bb2d9fd5f0c61ab8f",
-  "2026-08-10 09:58:03 UTC | lora_src_HTI | done | 48장"
+  "2026-08-10 09:58:03 UTC | lora_src_HTI | done | 48장",
+  "2026-08-10 10:34:18 UTC | cell08S_modules | done | state/git/autosave/log/budget",
+  "2026-08-10 10:34:20 UTC | cell08R_restore | done | ",
+  "2026-08-10 10:36:41 UTC | cell08_modules | done | 130s/장 (extras off)"
  ]
 }
