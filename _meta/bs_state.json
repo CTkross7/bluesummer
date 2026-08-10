@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-10 11:54:24 UTC",
+ "updated": "2026-08-10 12:04:55 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -60,8 +60,8 @@
   },
   "autosave_last": {
    "status": "done",
-   "ts": "2026-08-10 11:34:24 UTC",
-   "note": "d81fe0fc7b75326a0983bbeeb31e7dc638044bbf"
+   "ts": "2026-08-10 11:54:26 UTC",
+   "note": "ec584a6777c65585f708ee4c5e9206f0f01c5120"
   },
   "lora_src_HRM": {
    "status": "done",
@@ -81,6 +81,11 @@
   "lora_src_HTI": {
    "status": "done",
    "ts": "2026-08-10 09:58:03 UTC",
+   "note": "48장"
+  },
+  "lora_src_KYS": {
+   "status": "done",
+   "ts": "2026-08-10 12:04:55 UTC",
    "note": "48장"
   }
  },
@@ -107,12 +112,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "82935f50438f4c410e6e2708b5214f3dfe774b68",
-   "ts": "2026-08-09 12:41:45 UTC",
-   "msg": "stage 배경 68장",
-   "pushed": true
-  },
   {
    "hash": "f917a65f9e95b4709f74805718e658df92896f60",
    "ts": "2026-08-09 12:43:08 UTC",
@@ -466,9 +465,15 @@
    "ts": "2026-08-10 11:34:24 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "ec584a6777c65585f708ee4c5e9206f0f01c5120",
+   "ts": "2026-08-10 11:54:26 UTC",
+   "msg": "autosave",
+   "pushed": true
   }
  ],
- "last_commit": "d81fe0fc7b75326a0983bbeeb31e7dc638044bbf",
+ "last_commit": "ec584a6777c65585f708ee4c5e9206f0f01c5120",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -584,6 +589,8 @@
   "2026-08-10 11:20:46 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-10 11:20:47 UTC | cell08R_restore | done | ",
   "2026-08-10 11:23:06 UTC | cell08_modules | done | 130s/장 (extras off)",
-  "2026-08-10 11:34:24 UTC | autosave_last | done | d81fe0fc7b75326a0983bbeeb31e7dc638044bbf"
+  "2026-08-10 11:34:24 UTC | autosave_last | done | d81fe0fc7b75326a0983bbeeb31e7dc638044bbf",
+  "2026-08-10 11:54:26 UTC | autosave_last | done | ec584a6777c65585f708ee4c5e9206f0f01c5120",
+  "2026-08-10 12:04:55 UTC | lora_src_KYS | done | 48장"
  ]
 }
