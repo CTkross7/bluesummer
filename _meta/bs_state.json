@@ -1,16 +1,16 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-10 11:14:20 UTC",
+ "updated": "2026-08-10 11:34:22 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
-   "ts": "2026-08-10 10:34:18 UTC",
+   "ts": "2026-08-10 11:20:46 UTC",
    "note": "state/git/autosave/log/budget"
   },
   "cell08R_restore": {
    "status": "done",
-   "ts": "2026-08-10 10:34:20 UTC",
+   "ts": "2026-08-10 11:20:47 UTC",
    "note": ""
   },
   "cell08P_purge": {
@@ -55,13 +55,13 @@
   },
   "cell08_modules": {
    "status": "done",
-   "ts": "2026-08-10 10:36:41 UTC",
+   "ts": "2026-08-10 11:23:06 UTC",
    "note": "130s/장 (extras off)"
   },
   "autosave_last": {
    "status": "done",
-   "ts": "2026-08-10 10:54:20 UTC",
-   "note": "143899707e64938cfbeadaa2a727b51654060f6f"
+   "ts": "2026-08-10 11:14:22 UTC",
+   "note": "762a34bab2a358f7e63cb830b26d44ba8dd16c54"
   },
   "lora_src_HRM": {
    "status": "done",
@@ -102,17 +102,11 @@
  "retry": {},
  "timing": {
   "char": {
-   "n": 7,
-   "sum": 898.573312997818
+   "n": 8,
+   "sum": 1028.7345576286316
   }
  },
  "commits": [
-  {
-   "hash": "80867ef0e8b1015d35a2c94cc136eb5e8d35ee6e",
-   "ts": "2026-08-09 12:39:00 UTC",
-   "msg": "stage LoRA 학습",
-   "pushed": true
-  },
   {
    "hash": "02d0461db7f959e6cee30ca6599c7e278e4a9d0d",
    "ts": "2026-08-09 12:40:23 UTC",
@@ -466,9 +460,15 @@
    "ts": "2026-08-10 10:54:20 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "762a34bab2a358f7e63cb830b26d44ba8dd16c54",
+   "ts": "2026-08-10 11:14:22 UTC",
+   "msg": "autosave",
+   "pushed": true
   }
  ],
- "last_commit": "143899707e64938cfbeadaa2a727b51654060f6f",
+ "last_commit": "762a34bab2a358f7e63cb830b26d44ba8dd16c54",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -579,6 +579,10 @@
   "2026-08-10 10:34:18 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-10 10:34:20 UTC | cell08R_restore | done | ",
   "2026-08-10 10:36:41 UTC | cell08_modules | done | 130s/장 (extras off)",
-  "2026-08-10 10:54:20 UTC | autosave_last | done | 143899707e64938cfbeadaa2a727b51654060f6f"
+  "2026-08-10 10:54:20 UTC | autosave_last | done | 143899707e64938cfbeadaa2a727b51654060f6f",
+  "2026-08-10 11:14:22 UTC | autosave_last | done | 762a34bab2a358f7e63cb830b26d44ba8dd16c54",
+  "2026-08-10 11:20:46 UTC | cell08S_modules | done | state/git/autosave/log/budget",
+  "2026-08-10 11:20:47 UTC | cell08R_restore | done | ",
+  "2026-08-10 11:23:06 UTC | cell08_modules | done | 130s/장 (extras off)"
  ]
 }
