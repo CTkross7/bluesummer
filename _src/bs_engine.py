@@ -1039,7 +1039,19 @@ def make(prompt, negative, path, seed=-1, bg=False, adetailer=True,
         L.err("[engine] 저장 실패 %s : %s" % (label, e))
         return path, used, "fail"
     t_save = time.time() - t2
-
+    try:
+        import io as _io
+        from PIL import Image as _PIL
+        from IPython.display import display as _disp, Image as _IPImg
+        _pv = _PIL.open(path).convert("RGB")
+        # Output 패널에서 클릭 가능한 바로가기 (항상 최신 1장만 유지)
+        _pv.save("/kaggle/working/latest_gen.png", "PNG")
+        # 셀 출력에 인라인 표시
+        _buf = _io.BytesIO()
+        _pv.save(_buf, "PNG")
+        _disp(_IPImg(data=_buf.getvalue(), format="png"))
+    except Exception:
+        pass
     dt = time.time() - t0
     try:
         ST.timing_add("bg" if bg else "char", dt)
