@@ -1,16 +1,16 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-11 09:06:33 UTC",
+ "updated": "2026-08-11 10:21:17 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
-   "ts": "2026-08-11 08:06:27 UTC",
+   "ts": "2026-08-11 10:01:17 UTC",
    "note": "state/git/autosave/log/budget"
   },
   "cell08R_restore": {
    "status": "done",
-   "ts": "2026-08-11 08:06:30 UTC",
+   "ts": "2026-08-11 10:01:20 UTC",
    "note": ""
   },
   "cell08P_purge": {
@@ -55,13 +55,13 @@
   },
   "cell08_modules": {
    "status": "done",
-   "ts": "2026-08-11 08:09:15 UTC",
-   "note": "153s/장 (extras off)"
+   "ts": "2026-08-11 10:03:40 UTC",
+   "note": "130s/장 (extras off)"
   },
   "autosave_last": {
    "status": "done",
-   "ts": "2026-08-11 08:46:33 UTC",
-   "note": "d90c6ec29dd388752c4f71e3a04a84ad13b68a0a"
+   "ts": "2026-08-11 09:06:36 UTC",
+   "note": "13f09065034b5ed2de094bd7fec77ae752d0ebf1"
   },
   "lora_src_HRM": {
    "status": "done",
@@ -122,17 +122,11 @@
  "retry": {},
  "timing": {
   "char": {
-   "n": 13,
-   "sum": 1734.4578411579132
+   "n": 14,
+   "sum": 1864.152036190033
   }
  },
  "commits": [
-  {
-   "hash": "95fa19136ca33bb515fc2ae3fc67094a4d637c28",
-   "ts": "2026-08-09 13:09:43 UTC",
-   "msg": "session close flush",
-   "pushed": true
-  },
   {
    "hash": "0c1464cdbbf972994829671168c1d86b63195bf5",
    "ts": "2026-08-09 13:16:44 UTC",
@@ -486,9 +480,15 @@
    "ts": "2026-08-11 08:46:33 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "13f09065034b5ed2de094bd7fec77ae752d0ebf1",
+   "ts": "2026-08-11 09:06:36 UTC",
+   "msg": "autosave",
+   "pushed": true
   }
  ],
- "last_commit": "d90c6ec29dd388752c4f71e3a04a84ad13b68a0a",
+ "last_commit": "13f09065034b5ed2de094bd7fec77ae752d0ebf1",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -638,6 +638,10 @@
   "2026-08-11 08:09:15 UTC | cell08_modules | done | 153s/장 (extras off)",
   "2026-08-11 08:26:30 UTC | autosave_last | done | debefcfdb280ed8cad26221c9fcee383cc49738e",
   "2026-08-11 08:27:36 UTC | lora_src_CSM | done | 48장",
-  "2026-08-11 08:46:33 UTC | autosave_last | done | d90c6ec29dd388752c4f71e3a04a84ad13b68a0a"
+  "2026-08-11 08:46:33 UTC | autosave_last | done | d90c6ec29dd388752c4f71e3a04a84ad13b68a0a",
+  "2026-08-11 09:06:36 UTC | autosave_last | done | 13f09065034b5ed2de094bd7fec77ae752d0ebf1",
+  "2026-08-11 10:01:17 UTC | cell08S_modules | done | state/git/autosave/log/budget",
+  "2026-08-11 10:01:20 UTC | cell08R_restore | done | ",
+  "2026-08-11 10:03:40 UTC | cell08_modules | done | 130s/장 (extras off)"
  ]
 }
