@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-11 04:56:41 UTC",
+ "updated": "2026-08-11 04:57:31 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -60,8 +60,8 @@
   },
   "autosave_last": {
    "status": "done",
-   "ts": "2026-08-11 03:24:59 UTC",
-   "note": "957528e4c0b521e5268d1208a05f5f421dfa6a2c"
+   "ts": "2026-08-11 04:56:43 UTC",
+   "note": "c0f91172910b88f51a35dbc46ae0525e33b09ea3"
   },
   "lora_src_HRM": {
    "status": "done",
@@ -92,6 +92,11 @@
    "status": "done",
    "ts": "2026-08-11 01:38:40 UTC",
    "note": "48장"
+  },
+  "lora_src_BRW": {
+   "status": "done",
+   "ts": "2026-08-11 04:57:31 UTC",
+   "note": "48장"
   }
  },
  "counts": {
@@ -117,12 +122,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "207628e439479c341874d800f122726b361ff38f",
-   "ts": "2026-08-09 13:05:22 UTC",
-   "msg": "stage 인물 720장",
-   "pushed": true
-  },
   {
    "hash": "bb6d47aed51d3b928705112d99d0247a2cc1b158",
    "ts": "2026-08-09 13:06:41 UTC",
@@ -476,9 +475,15 @@
    "ts": "2026-08-11 03:24:59 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "c0f91172910b88f51a35dbc46ae0525e33b09ea3",
+   "ts": "2026-08-11 04:56:43 UTC",
+   "msg": "autosave",
+   "pushed": true
   }
  ],
- "last_commit": "957528e4c0b521e5268d1208a05f5f421dfa6a2c",
+ "last_commit": "c0f91172910b88f51a35dbc46ae0525e33b09ea3",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -614,6 +619,8 @@
   "2026-08-11 03:24:59 UTC | autosave_last | done | 957528e4c0b521e5268d1208a05f5f421dfa6a2c",
   "2026-08-11 04:36:41 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-11 04:36:43 UTC | cell08R_restore | done | ",
-  "2026-08-11 04:39:00 UTC | cell08_modules | done | 125s/장 (extras off)"
+  "2026-08-11 04:39:00 UTC | cell08_modules | done | 125s/장 (extras off)",
+  "2026-08-11 04:56:43 UTC | autosave_last | done | c0f91172910b88f51a35dbc46ae0525e33b09ea3",
+  "2026-08-11 04:57:31 UTC | lora_src_BRW | done | 48장"
  ]
 }
