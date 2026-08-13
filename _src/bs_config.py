@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""BLUE SUMMER v3.1 : 화질·학습·자동화 규격의 단일 원천.
+"""BLUE SUMMER v3.2 : 화질·학습·자동화 규격의 단일 원천.
 
-v3.1 변경점 (extras 정체 사고 대응)
-  · EXTRAS_ENABLE 기본 False  - 2차 ESRGAN 업스케일이 장당 4~8분을 잡아먹고
-    512x768 최종본에는 거의 기여하지 않으므로 기본 경로에서 제외한다.
-  · LOCAL_SHARPEN True        - LANCZOS 축소 직후 UnsharpMask 로 라인 선예도 확보.
-  · EXTRAS_* 안전장치 추가    - 입력 픽셀 상한 / 단일 업스케일러 / 하드 타임아웃 /
-    느리면 세션 내 자동 비활성화.
+v3.1 -> v3.2 변경점 (GPU 한도 소진 대비 CPU 폴백)
+  · 파일 맨 아래에 'CPU 폴백 자동 조정' 블록 추가.
+  · CPU 모드에서도 화질 파라미터는 단 하나도 바꾸지 않는다.
+    (체크포인트/샘플러/steps/CFG/해상도/Hires/ADetailer/프롬프트 동일)
+  · 바뀌는 것은 타임아웃 · 진단 주기 · 시간 예산 추정치 · 푸시 주기뿐.
 """
 import os
 
@@ -149,3 +148,77 @@ FORGE_LOG_TAIL_SEC = 4.0
 FORGE_LOG_TAIL_MAX = 3
 GEN_TIMEOUT        = 1800
 VRAM_LOG           = True
+
+# =====================================================================
+# CPU 폴백 자동 조정
+# ---------------------------------------------------------------------
+# GPU 주간 한도가 소진되어 CPU 로 돌 때 적용된다.
+#
+#  [절대 바꾸지 않는 것 = 화질]
+#    CKPT / VAE / CLIP_SKIP / SAMPLER / SCHEDULER / STEPS / CFG /
+#    WIDTH / HEIGHT / HR_SCALE / HR_STEPS / HR_DENOISE / HR_CFG /
+#    BG_* / AD_* / OUT_W / OUT_H / WEBP_* / 프롬프트·네거티브 전체
+#    -> 즉 CPU 로 뽑아도 GPU 결과물과 픽셀 규격·처리 순서가 동일하다.
+#       (같은 seed 면 부동소수점 연산 순서 차이로 미세한 차이는 날 수 있으나
+#        품질 등급은 동일하다)
+#
+#  [바꾸는 것 = 시간]
+#    타임아웃 / 진단 주기 / 장당 소요 추정 / 푸시 주기
+# =====================================================================
+CPU_MODE = False
+CPU_THREADS = 0
+CPU_FAST_HIRES = False
+ENABLE_LORA_TRAIN_ON_CPU = True
+
+try:
+    import bs_device as _D
+    CPU_MODE = (_D.detect() == "cpu")
+    CPU_THREADS = _D.threads()
+except Exception:
+    _D = None
+    CPU_MODE = False
+
+if CPU_MODE and _D is not None:
+    _D.apply_env()
+    try:
+        _D.apply_forge()
+    except Exception:
+        pass
+
+    # ---- 타임아웃 : CPU 1장은 30~60분이 걸린다 ----
+    GEN_TIMEOUT        = int(os.environ.get("BS_CPU_GEN_TIMEOUT", "21600"))  # 6시간
+    PROGRESS_POLL_SEC  = 20.0
+    HEARTBEAT_SEC      = 120.0
+    STALL_WARN_SEC     = 2400.0    # CPU 는 1스텝에 수십 초 걸린다
+    FORGE_LOG_TAIL_SEC = 15.0
+    FORGE_LOG_TAIL_MAX = 2
+    VRAM_LOG           = False     # nvidia-smi 가 없으므로 RAM 표기로 대체
+
+    # ---- extras 2차 정제 : CPU 에서는 절대 켜지 않는다 ----
+    EXTRAS_ENABLE      = False
+    EXTRAS_TIMEOUT     = 7200
+    EXTRAS_SLOW_SEC    = 1800
+    EXTRAS_SLOW_LIMIT  = 1
+    LOCAL_SHARPEN      = True      # 라인 선예도는 언샵 마스크가 담당(GPU 와 동일)
+
+    # ---- 저장 주기 : 1장이 오래 걸리므로 자주 커밋 ----
+    PUSH_EVERY         = 2
+    AUTOSAVE_MIN       = 15
+
+    # ---- 소요 추정(분) : 실측이 쌓이면 bs_state.timing_avg 가 자동 대체 ----
+    EST_CHAR_MIN       = float(os.environ.get("BS_CPU_EST_CHAR_MIN", "45"))
+    EST_BG_MIN         = float(os.environ.get("BS_CPU_EST_BG_MIN", "40"))
+    EST_UI_MIN         = float(os.environ.get("BS_CPU_EST_UI_MIN", "12"))
+    EST_LORASRC_MIN    = float(os.environ.get("BS_CPU_EST_LORASRC_MIN", "35"))
+    EST_TRAIN_MIN      = 100000.0   # CPU LoRA 학습은 사실상 불가능
+
+    # 이미 학습된 LoRA 는 CPU 생성에도 그대로 적용된다(ENABLE_LORA 유지).
+    # 학습 자체는 BS_CPU_TRAIN=1 을 주지 않는 한 건너뛴다.
+    ENABLE_LORA_TRAIN_ON_CPU = os.environ.get("BS_CPU_TRAIN", "0") == "1"
+
+    # ---- (선택) 화질을 조금 포기하고 속도를 얻고 싶을 때만 ----
+    # BS_CPU_FAST_HIRES=1 이면 Hires 업스케일러를 ESRGAN -> Lanczos 로 바꾼다.
+    # 장당 10~20분이 줄지만 텍스처 디테일이 떨어진다. 기본값은 OFF(=동일 화질).
+    CPU_FAST_HIRES = os.environ.get("BS_CPU_FAST_HIRES", "0") == "1"
+    if CPU_FAST_HIRES:
+        UPSCALER_HIRES = "Lanczos"
