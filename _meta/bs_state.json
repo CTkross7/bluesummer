@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-17 11:18:05 UTC",
+ "updated": "2026-08-17 11:38:07 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -60,8 +60,8 @@
   },
   "autosave_last": {
    "status": "done",
-   "ts": "2026-08-17 10:58:05 UTC",
-   "note": "30fcfb55384cdb0758cbce65ae8c119f30728cde"
+   "ts": "2026-08-17 11:18:07 UTC",
+   "note": "ed4477a653489ff487bcc35e0986b5f818b56a9a"
   },
   "lora_src_HRM": {
    "status": "done",
@@ -132,12 +132,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "e90e73a0389208e67cd32f3e444da4c4ca63f0cc",
-   "ts": "2026-08-09 13:35:08 UTC",
-   "msg": "stage LoRA 학습",
-   "pushed": true
-  },
   {
    "hash": "8e1fafc388aa67b96d0725d7b769eb9786461062",
    "ts": "2026-08-09 13:49:18 UTC",
@@ -491,9 +485,15 @@
    "ts": "2026-08-17 10:58:05 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "ed4477a653489ff487bcc35e0986b5f818b56a9a",
+   "ts": "2026-08-17 11:18:07 UTC",
+   "msg": "autosave",
+   "pushed": true
   }
  ],
- "last_commit": "30fcfb55384cdb0758cbce65ae8c119f30728cde",
+ "last_commit": "ed4477a653489ff487bcc35e0986b5f818b56a9a",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -663,6 +663,7 @@
   "2026-08-17 10:37:41 UTC | cell08_modules | done | 142s/장 (extras off)",
   "2026-08-17 10:38:02 UTC | autosave_last | done | 45bd094f1f2ebae3d9d584265f1557e6ec110b27",
   "2026-08-17 10:45:26 UTC | lora_src_JHO | done | 48장",
-  "2026-08-17 10:58:05 UTC | autosave_last | done | 30fcfb55384cdb0758cbce65ae8c119f30728cde"
+  "2026-08-17 10:58:05 UTC | autosave_last | done | 30fcfb55384cdb0758cbce65ae8c119f30728cde",
+  "2026-08-17 11:18:07 UTC | autosave_last | done | ed4477a653489ff487bcc35e0986b5f818b56a9a"
  ]
 }
