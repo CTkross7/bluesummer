@@ -1,0 +1,44 @@
+[model_arguments]
+pretrained_model_name_or_path = "/kaggle/temp/models/Stable-diffusion/novaAnimeXL_ilV190.safetensors"
+vae = "/kaggle/temp/models/VAE/sdxl_vae.safetensors"
+
+[additional_network_arguments]
+network_module = "networks.lora"
+network_dim = 32
+network_alpha = 16
+network_train_unet_only = false
+
+[optimizer_arguments]
+optimizer_type = "AdamW8bit"
+learning_rate = 1e-4
+unet_lr = 1e-4
+text_encoder_lr = 2e-5
+lr_scheduler = "cosine_with_restarts"
+lr_scheduler_num_cycles = 3
+lr_warmup_steps = 50
+max_grad_norm = 1.0
+
+[training_arguments]
+output_dir = "/kaggle/working/BLUESUMMER/lora/HRM/model"
+output_name = "bs_HRM_v3"
+save_precision = "bf16"
+save_every_n_epochs = 2
+save_state = true
+max_train_epochs = 8
+train_batch_size = 1
+mixed_precision = "bf16"
+gradient_checkpointing = true
+gradient_accumulation_steps = 1
+seed = 1234
+clip_skip = 2
+min_snr_gamma = 5
+noise_offset = 0.03
+sdpa = true
+no_half_vae = true
+cache_latents = true
+cache_latents_to_disk = true
+persistent_data_loader_workers = true
+max_data_loader_n_workers = 2
+logging_dir = "/kaggle/working/BLUESUMMER/lora/HRM/log"
+log_prefix = "bs_HRM_"
+# IL v19.0 은 NoobAI EPS 기반 -> v_parameterization / zero_terminal_snr 사용 금지

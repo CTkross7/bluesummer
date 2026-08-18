@@ -1,0 +1,16 @@
+[general]
+shuffle_caption = true
+keep_tokens = 1
+caption_extension = ".txt"
+enable_bucket = true
+bucket_no_upscale = false
+min_bucket_reso = 640
+max_bucket_reso = 1536
+
+[[datasets]]
+resolution = 1024
+batch_size = 1
+
+  [[datasets.subsets]]
+  image_dir = "/kaggle/working/BLUESUMMER/lora/HRM/img/10_bsharam 1girl"
+  num_repeats = 10
