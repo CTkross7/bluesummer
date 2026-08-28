@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-28 05:56:47 UTC",
+ "updated": "2026-08-28 05:56:49 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -142,12 +142,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "4b7e5d5c389c071fd70043b02db8142bb40c7b1e",
-   "ts": "2026-08-10 06:47:53 UTC",
-   "msg": "autosave",
-   "pushed": true
-  },
   {
    "hash": "2077f486f7fa4be40b7f49e81ad1c321b8a1e2bf",
    "ts": "2026-08-10 07:02:18 UTC",
@@ -501,9 +495,15 @@
    "ts": "2026-08-28 05:55:00 UTC",
    "msg": "stage LoRA 소스 생성",
    "pushed": true
+  },
+  {
+   "hash": "5be6b8425c0252459da6df2218a1128bd213026a",
+   "ts": "2026-08-28 05:56:49 UTC",
+   "msg": "dataset",
+   "pushed": true
   }
  ],
- "last_commit": "197c798299006fd76e3b11ad509ed045e9b2c4ac",
+ "last_commit": "5be6b8425c0252459da6df2218a1128bd213026a",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
