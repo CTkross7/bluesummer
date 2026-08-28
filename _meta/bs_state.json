@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-08-28 05:54:58 UTC",
+ "updated": "2026-08-28 05:56:47 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -110,12 +110,12 @@
   },
   "cellA2_select": {
    "status": "done",
-   "ts": "2026-08-18 01:18:21 UTC",
+   "ts": "2026-08-28 05:56:47 UTC",
    "note": ""
   },
   "cellA3_dataset": {
    "status": "done",
-   "ts": "2026-08-18 01:18:21 UTC",
+   "ts": "2026-08-28 05:56:47 UTC",
    "note": ""
   }
  },
@@ -142,12 +142,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "82713a460a00ab9385c33a54afddb5db3cb29e92",
-   "ts": "2026-08-10 06:30:07 UTC",
-   "msg": "BLUE SUMMER v3 assets",
-   "pushed": true
-  },
   {
    "hash": "4b7e5d5c389c071fd70043b02db8142bb40c7b1e",
    "ts": "2026-08-10 06:47:53 UTC",
@@ -501,9 +495,15 @@
    "ts": "2026-08-20 04:35:43 UTC",
    "msg": "autosave",
    "pushed": true
+  },
+  {
+   "hash": "197c798299006fd76e3b11ad509ed045e9b2c4ac",
+   "ts": "2026-08-28 05:55:00 UTC",
+   "msg": "stage LoRA 소스 생성",
+   "pushed": true
   }
  ],
- "last_commit": "b9b28a0c7acced5f5243b99f872a3dffc8c44db5",
+ "last_commit": "197c798299006fd76e3b11ad509ed045e9b2c4ac",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -693,6 +693,8 @@
   "2026-08-20 04:15:41 UTC | autosave_last | done | c943b6348f2e39fe3c18d9a36bc0b60e1146e9b4",
   "2026-08-20 04:35:43 UTC | autosave_last | done | b9b28a0c7acced5f5243b99f872a3dffc8c44db5",
   "2026-08-28 05:51:54 UTC | cell08S_modules | done | state/git/autosave/log/budget",
-  "2026-08-28 05:51:56 UTC | cell08R_restore | done | "
+  "2026-08-28 05:51:56 UTC | cell08R_restore | done | ",
+  "2026-08-28 05:56:47 UTC | cellA2_select | done | ",
+  "2026-08-28 05:56:47 UTC | cellA3_dataset | done | "
  ]
 }
