@@ -43,6 +43,34 @@ clip_package 설정을 안전하게 패치한다.
 """
 
 import os
+
+# [PATCH-A] scikit-image req patch
+def _patch_forge_requirements(forge_dir):
+    """
+    Forge requirements_versions.txt 의 scikit-image 버전을
+    Python 3.12 wheel 이 존재하는 버전으로 교체한다.
+    scikit-image 0.21.0 이하는 Python 3.12 용 사전 빌드 wheel 없음.
+    """
+    import os
+    req = os.path.join(forge_dir, "requirements_versions.txt")
+    if not os.path.exists(req):
+        return
+    with open(req, "r") as f:
+        txt = f.read()
+    replacements = [
+        ("scikit-image==0.21.0", "scikit-image==0.22.0"),
+        ("scikit-image==0.20.0", "scikit-image==0.22.0"),
+        ("scikit-image==0.19.0", "scikit-image==0.22.0"),
+    ]
+    changed = False
+    for old, new in replacements:
+        if old in txt:
+            txt = txt.replace(old, new)
+            changed = True
+    if changed:
+        with open(req, "w") as f:
+            f.write(txt)
+
 import sys
 import time
 import signal
