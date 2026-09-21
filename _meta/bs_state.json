@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-09-21 02:37:44 UTC",
+ "updated": "2026-09-21 02:53:04 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -142,12 +142,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "8ccdc44bd7c11818eb52f0748aeac89f486529a1",
-   "ts": "2026-08-10 09:08:05 UTC",
-   "msg": "autosave",
-   "pushed": true
-  },
   {
    "hash": "7edc836cf063e6a77a0d1794f1b52e0fecc775c7",
    "ts": "2026-08-10 09:28:07 UTC",
@@ -501,9 +495,15 @@
    "ts": "2026-09-21 02:37:44 UTC",
    "msg": "dataset",
    "pushed": true
+  },
+  {
+   "hash": "2203c32a91d4990bac06a7b1a6ed85dfd2b6599c",
+   "ts": "2026-09-21 02:37:47 UTC",
+   "msg": "stage 선별 + 데이터셋",
+   "pushed": true
   }
  ],
- "last_commit": "e991adcac40b453294e3c4562e08a8aa8c1cd63b",
+ "last_commit": "2203c32a91d4990bac06a7b1a6ed85dfd2b6599c",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
