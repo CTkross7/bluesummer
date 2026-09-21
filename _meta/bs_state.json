@@ -1,7 +1,7 @@
 {
  "schema": 4,
  "created": "2026-08-09 11:50:37 UTC",
- "updated": "2026-09-21 04:26:01 UTC",
+ "updated": "2026-09-21 04:46:03 UTC",
  "steps": {
   "cell08S_modules": {
    "status": "done",
@@ -60,8 +60,8 @@
   },
   "autosave_last": {
    "status": "done",
-   "ts": "2026-09-21 03:33:14 UTC",
-   "note": "2de9ad2b0fc030217931f9bb22cf53c140a64c13"
+   "ts": "2026-09-21 04:26:03 UTC",
+   "note": "3ed85b3a72f7799052aa63d0bb638231e7a431ac"
   },
   "lora_src_HRM": {
    "status": "done",
@@ -142,12 +142,6 @@
   }
  },
  "commits": [
-  {
-   "hash": "ec584a6777c65585f708ee4c5e9206f0f01c5120",
-   "ts": "2026-08-10 11:54:26 UTC",
-   "msg": "autosave",
-   "pushed": true
-  },
   {
    "hash": "4e4ae582281e32f6b7991a8cc9b9d6dc1cf1fbf7",
    "ts": "2026-08-10 12:04:57 UTC",
@@ -501,9 +495,15 @@
    "ts": "2026-09-21 04:11:19 UTC",
    "msg": "stage 선별 + 데이터셋",
    "pushed": true
+  },
+  {
+   "hash": "3ed85b3a72f7799052aa63d0bb638231e7a431ac",
+   "ts": "2026-09-21 04:26:03 UTC",
+   "msg": "autosave",
+   "pushed": true
   }
  ],
- "last_commit": "faab8f1469d9cdefd3bc06de3df45479b319a42f",
+ "last_commit": "3ed85b3a72f7799052aa63d0bb638231e7a431ac",
  "log": [
   "2026-08-09 11:50:37 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-08-09 11:50:39 UTC | cell08R_restore | done | ",
@@ -712,6 +712,7 @@
   "2026-09-21 04:06:01 UTC | cell08S_modules | done | state/git/autosave/log/budget",
   "2026-09-21 04:06:04 UTC | cell08R_restore | done | ",
   "2026-09-21 04:11:15 UTC | cellA2_select | done | ",
-  "2026-09-21 04:11:15 UTC | cellA3_dataset | done | "
+  "2026-09-21 04:11:15 UTC | cellA3_dataset | done | ",
+  "2026-09-21 04:26:03 UTC | autosave_last | done | 3ed85b3a72f7799052aa63d0bb638231e7a431ac"
  ]
 }
